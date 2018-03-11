@@ -1,0 +1,23 @@
+{
+  "name": "tharwa",
+  "version": "1.0.0",
+  "description": "API reste THARWA",
+  "main": "server.js",
+  "scripts": {
+    "test": "tester"
+  },
+  "keywords": [
+    "server.http.api.rest"
+  ],
+  "author": "ORCA",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "crypto": "^1.0.1",
+    "express": "^4.16.2",
+    "request": "^2.83.0",
+    "sequelize": "^4.35.0",
+    "tedious": "^2.3.1"
+  }
+}

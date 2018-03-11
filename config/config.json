@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "tharwa",
+    "password": null,
+    "database": "database_development",
+    "host": "den1.mssql6.gear.host",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "root",
+    "password": null,
+    "database": "database_test",
+    "host": "den1.mssql6.gear.host",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "den1.mssql6.gear.host",
+    "dialect": "mysql"
+  }
+}
