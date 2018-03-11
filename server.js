@@ -28,11 +28,7 @@ const sequelize = new Sequelize('THARWA', 'tharwa', 'orca@2018', {
   
 });
 
-server.get('/', function (req, res) {
-
-    // connect to  database THARWA
-
-    sequelize
+sequelize
     .authenticate()
     .then(() => {
       console.log('Connection has been established successfully.');
@@ -42,8 +38,7 @@ server.get('/', function (req, res) {
     .catch(err => {
       console.error('Unable to connect to the database:', err);
     });
-   //sql.close()
-});
+
 
 
 
