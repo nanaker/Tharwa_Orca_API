@@ -59,6 +59,8 @@ server.use('/users',usersRoute);
 
 
 //mettre le serveur en écoute 
-server.listen(process.env.PORT, '0.0.0.0');
 
+server.listen(8080,function (){
+   console.log("Serveur en écoute !");
+});
 
