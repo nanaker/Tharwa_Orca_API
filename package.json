@@ -1,11 +1,16 @@
 {
-  "name": "tharwa",
+    "name": "tharwa",
   "version": "1.0.0",
-  "description": "API reste THARWA",
   "main": "server.js",
-  "scripts": {
-    "test": "tester"
+  "description": "API reste THARWA",
+  "scripts" : {
+    "start" : "node server.js"
   },
+  "engines" : {
+    "node" : "~4.0"
+  },
+
+
   "keywords": [
     "server.http.api.rest"
   ],
@@ -20,4 +25,6 @@
     "sequelize": "^4.35.0",
     "tedious": "^2.3.1"
   }
+
+
 }
