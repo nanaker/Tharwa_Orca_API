@@ -1,5 +1,5 @@
 //imports
-var bcrypt = require('bcrypt');
+
 var crypto = require('crypto');
 var http = require("http");
 const request = require('request');
