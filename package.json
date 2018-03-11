@@ -1,14 +1,12 @@
 {
     "name": "tharwa",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "main": "server.js",
   "description": "API reste THARWA",
   "scripts" : {
     "start" : "node server.js"
   },
-  "engines" : {
-    "node" : "~4.0"
-  },
+  
 
 
   "keywords": [
