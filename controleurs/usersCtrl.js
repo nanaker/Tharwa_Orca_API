@@ -92,7 +92,8 @@ function dashBoard  (req,res){
                       //vérifier la compatibilité entre l'utilisateur et l'application qu'il utilise ( web ou mobile)
                       if((userFound.type == 0 && response.appId == 'clientweb') || (userFound.type == 1 && response.appId == 'clientweb')|| (userFound.type == 2 && response.appId == 'clientmobile')){
                             res.status(200).json({'userId':userFound.userId,
-                                            'userName': userFound.username});
+                                                  'userName': userFound.username,
+                                                  'type' : userFound.type  });
                       }else {
                         res.status(401).json({'error':'Unothorized application'}); //unothorized
                       }

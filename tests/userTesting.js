@@ -5,12 +5,12 @@ var expect  = require('chai').expect;
 
 //tester la récupération des info du tableau de bord
 describe("GET /users/dashboard", function () {
-        it(" Should get the id and the userName of the user return with code 200", function (done) {
+        it(" Should get the id and the userName of the user and return with code 200", function (done) {
            request.get(
                {url : base_url + "/users/dashboard",
                 headers : {
                     "Content-Type" : 'application/x-www-form-urlencoded',
-                    "token" : "m7t9OqBHOmw2CYnuGHrrhfCiOAMMSaSYoPPR8KLWATIV8KnnkOWAFFIR2ToSqapz6ttnoNXfUeBTdijfnI6PaxkVyv8qYXMkj8vv0R0Eu9o0wyrQqvxj0lSf8ASU49FLUElkzaAot3FGfoLF8g7raNaux8OHQ5HDU5c2udeKDp46uZz5nWPH0X3O6vKq1srKciExpTN0dFw7JjKfugvSzvRI3tOhgag0hoSHa6MrTu8ouW1GVlHX9KgSbXOXTjJ"
+                    "token" : "KbHuxD34DmAStTxCvQmhDQREJ1D9v5ElMfX0vnXGtv6Gy3xoVNRRgPPoPSZBKcTyAgGDcxuhCFQblLNbT0yNiuBQXxyqQPMMIlbfAkUyyP2r6zO3cmmfavW7OFo7yZf2yKY2QjocefP3uQEpGb5d29sXmQ4udqiwOcsJBpZaZzwK5aw4DkEHETv9txsicudNc9xjrO358QORqYRzj1tJmcS8hnTXQX8sPte56561BXHt7QmRkqa2oo25qgGFmA0"
                 }},
               function (error, response, body) {
               expect(response.statusCode).to.equal(200);
@@ -18,8 +18,8 @@ describe("GET /users/dashboard", function () {
              // done();
             }).then(done());
         });
-
-        it(" Should verify the invalid token and return with code 401", function (done) {
+ 
+        it(" Should detect the invalid token and return with code 401", function (done) {
             request.get(
                 {url : base_url + "/users/dashboard",
                  headers : {
