@@ -2,8 +2,8 @@
 module.exports = function(express,usersController){
    
     const router = express.Router();
-    router.post('/inscription',(req,res) =>{
-        usersController.inscription(req,res);
+    router.post('/BankerInscription',(req,res) =>{
+        usersController.BankerInscription(req,res);
     });
 
     router.get('/dashBoard',(req,res) =>{
