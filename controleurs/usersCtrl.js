@@ -1,15 +1,19 @@
 //imports
-
 var crypto = require('crypto');
 var tokenVerifier = require('./tokenCtrl');
 var multer = require('Multer');
 var path = require('path');
 
 
-//Routes
+//exports
 module.exports = function(User,sequelize) {
 
- //service de création du compte utilisateur pour banquier
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+
+/*-------------------------------service de création du compte utilisateur pour banquier---------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 
     function BankerInscription (req,res){
         
@@ -35,8 +39,15 @@ module.exports = function(User,sequelize) {
                       
                       //vérifier son type (que c'est vraiment un gestionnaire)
                       if(userFound.type == 0 ){
-                           //procéder à la création du compte banquier : 
-                           createBankerAccount(req,res);
+                           //procéder à la création du compte utilisateur pour le banquier : 
+                           createUserAccount(req,res,1,(response) => {
+                               if (response.statutCode == 201){
+                                  res.status(response.statutCode).json({'id':response.Id});
+                               }else {
+                                  res.status(response.statutCode).json({'error':response.error});
+                               }
+                                
+                           });
 
                       }else {
                             //Ce n'est pas un gestionnaire -> l'opération de création n'est pas permise
@@ -68,9 +79,12 @@ module.exports = function(User,sequelize) {
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
-//service de création du compte utilisateur pour client:
+/*-------------------------------service de création du compte utilisateur pour un client--------------------------------*/
 
-function ClientInscription(req,res){
+/*-----------------------------------------------------------------------------------------------------------------------*/
+
+
+function ClientInscription(req,res,erreur){
 
     const storage = multer.diskStorage({
         destination: 'C:/avatars',
@@ -83,22 +97,32 @@ function ClientInscription(req,res){
 
     upload(req,res,(err)=> {
     if (err){
-        res.status(500).json({'error':'Can\'t download image'});
+        res.status(500).json({'error':'Can\'t upload profile image'});
     }else {
         
          // const imagePath =  req.file.path;
-        
+         createUserAccount(req, res,2,(response)=>{
+            //si le compte utilisateur a été bien créé, on procède à la création du compte banquaire
+            if (response.statutCode == 201){
+                erreur(false);
+               // res.status(response.statutCode).json({'id':response.Id});
+             }else {
+                erreur(true);
+                res.status(response.statutCode).json({'error':response.error});
+             }
+         });
      }
     });
     
 
 }
 
+/*---------------------------------------------------------------------------------------------------------------------*/
 
-/*-----------------------------------------------------------------------------------------------------------------------*/   
+/*---------------service pour récupérer les informations du tableau de bord d'un utilisateur authentifié---------------*/   
 
-
- //service pour récupérer les informations du tableau de bord d'un utilisateur authentifié
+/*---------------------------------------------------------------------------------------------------------------------*/
+ 
 function dashBoard  (req,res){
         
             const token = req.headers['token']; //récupérer le Access token
@@ -151,93 +175,28 @@ function dashBoard  (req,res){
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
-
- //procedure de création du compte client :
-
-   function createClientUserAccount(req, res){
-      
-      //récupérer les paramètres de l'utilisateur depuis le body de la requete
-      var id = req.body.userId;
-      var Username = req.body.UserName;
-      var Password = req.body.Pwd;
-      var Type = parseInt(req.body.type);
-      var tel = req.body.Tel;
-      var nom = req.body.Nom;
-      var prenom = req.body.Prenom;
-      var adresse = req.body.Adresse;
-      var fonction = req.body.Fonction;
-      var imagePath =  req.file.path;
-     
-
-
-      //Vérifier que tous les paramètres obligatoires sont présents :
-      if(id == null || Username == null || Password == null || Type == null|| tel == null || nom == null || prenom == null || adresse == null || fonction == null ||imagePath == null){
-          return res.status(400).json({'error':'missing parameters'}); //bad request
-      }
-
-      
-     //tout d'abord, vérifier si l'utilisateur est déjà présent dans la BDD THARWA
-     const value = sequelize.escape(id);
-     var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)     
-     User.findOne({
-          attributes:['userId'],
-          where: {  idd }
-          
-      })
-      .then(function(userFound){ 
-         if(userFound){ //si'il existe :
-            
-            return res.status(409).json({'error':'User already exists'}); //  conflict
-          
-
-         }else{
-                //hasher le mot de passe :
-                const passwordHash = crypto.createHmac('sha256', Password).digest('hex');
-
-                //créer le nouveau utilisateur :
-                 var newUser = User.create({
-                     userId : id,
-                     username : Username,
-                     type : Type,
-                     password : passwordHash,
-                     numTel : tel
-
-                 }).then(function(newUser){
-
-                    ///
-                      return res.status(201).json({'Id': newUser.userId}); // new ressource created
-                 })
-                 .catch(err => {
-                  return res.status(500).json({'error':'Unable to create user account:'}); //interne error
-                  console.error('Unable to add user:', err);
-                  });
-         
-         }
-      })
-      .catch(function(err){
-          return res.status(500).json({'error':'Can\'t verify parameters'}); //interne error
-          console.log(err);
-      });
-
-   }
-
-
-
+/*                                      Procedure de création des comptes utilisateur                                   */
+ 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
-    //procedure de création du compte banquier :
+    
 
-    function createClientAccount(req, res){
+    function createUserAccount(req, res,type,callback){
       
         //récupérer les paramètres de l'utilisateur depuis le body de la requete
         var id = req.body.userId;
         var Username = req.body.UserName;
         var Password = req.body.Pwd;
-        var Type = 1;
+        var Type = type;
         var tel = req.body.Tel;
         //Vérifier que tous les paramètres obligatoires sont présents :
         if(id == null || Username == null || Password == null || Type == null|| tel == null){
-            return res.status(400).json({'error':'missing parameters'}); //bad request
+            response = {
+                'statutCode' : 400, //bad request
+                'error'  : 'missing parameters'           
+               }
+            callback(response);
+           
         }
   
         
@@ -250,12 +209,15 @@ function dashBoard  (req,res){
             
         })
         .then(function(userFound){ 
+
            if(userFound){ //si'il existe :
-              
-              return res.status(409).json({'error':'User already exists'}); //  conflict
-            
-  
-           }else{
+                response = {
+                    'statutCode' : 409, //  conflict
+                    'error'  : 'User already exists'           
+                }
+                callback(response);
+            }
+            else{
                   //hasher le mot de passe :
                   const passwordHash = crypto.createHmac('sha256', Password).digest('hex');
   
@@ -268,17 +230,30 @@ function dashBoard  (req,res){
                        numTel : tel
   
                    }).then(function(newUser){
-                        return res.status(201).json({'Id': newUser.userId}); // new ressource created
+                        response = {
+                            'statutCode' : 201, // new ressource created
+                            'Id'  : newUser.userId           
+                        }
+                        callback(response);
+                       
                    })
                    .catch(err => {
-                    return res.status(500).json({'error':'Unable to add user:'}); //interne error
-                    console.error('Unable to add user:', err);
+                        response = {
+                            'statutCode' : 500, //internal error
+                            'error':'Unable to add user'          
+                        }
+                        callback(response);
+                        console.error('Unable to add user', err);
                     });
            
            }
         })
         .catch(function(err){
-            return res.status(500).json({'error':'Can\'t verify parameters'}); //interne error
+            response = {
+                'statutCode' : 500, //internal error
+                'error':'Can\'t verify parameters'          
+            }
+            callback(response);
             console.log(err);
         });
   
@@ -286,6 +261,6 @@ function dashBoard  (req,res){
 
 
 
-
+    //exporter les services :
     return {BankerInscription,dashBoard,ClientInscription};
 }

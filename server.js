@@ -44,12 +44,16 @@ sequelize
 
 //Models
 const User = sequelize.import(__dirname + "/models/Users");
+const Client = sequelize.import(__dirname + "/models/Client");
+const Compte = sequelize.import(__dirname + "/models/Compte");
 
 //Controllers
 const usersController = require('./controleurs/usersCtrl')(User,sequelize);
+const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
+const accountController = require('./controleurs/accountCtrl')(Compte,sequelize);
 
 //Routes
-const usersRoute = require('./routes/usersRoutes')(express,usersController);
+const usersRoute = require('./routes/usersRoutes')(express,usersController,clientController,accountController);
 server.use('/users',usersRoute);
 
 
