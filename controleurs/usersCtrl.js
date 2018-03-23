@@ -2,11 +2,14 @@
 
 var crypto = require('crypto');
 var tokenVerifier = require('./tokenCtrl');
+var multer = require('Multer');
+var path = require('path');
+
 
 //Routes
 module.exports = function(User,sequelize) {
 
-   //service de création du compte banquier
+ //service de création du compte utilisateur pour banquier
 
     function BankerInscription (req,res){
         
@@ -57,14 +60,42 @@ module.exports = function(User,sequelize) {
 
         });
 
-        /************************************************** */
+        
          
         
     }
 
-//service 
+
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+//service de création du compte utilisateur pour client:
+
+function ClientInscription(req,res){
+
+    const storage = multer.diskStorage({
+        destination: 'C:/avatars',
+        filename: function (req, file, callback) {
+            callback(null,'avatar'+path.extname(file.originalname));
+        }
+      });
+
+    const upload = multer({ storage: storage }).single('avatar');
+
+    upload(req,res,(err)=> {
+    if (err){
+        res.status(500).json({'error':'Can\'t download image'});
+    }else {
+        
+         // const imagePath =  req.file.path;
+        
+     }
+    });
+    
+
+}
 
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
 
 
  //service pour récupérer les informations du tableau de bord d'un utilisateur authentifié
@@ -118,19 +149,29 @@ function dashBoard  (req,res){
     }
 
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
 
-   //procedure de création du compte banquier :
 
-   function createBankerAccount(req, res){
+ //procedure de création du compte client :
+
+   function createClientUserAccount(req, res){
       
       //récupérer les paramètres de l'utilisateur depuis le body de la requete
       var id = req.body.userId;
       var Username = req.body.UserName;
       var Password = req.body.Pwd;
-      var Type = 1;
+      var Type = parseInt(req.body.type);
       var tel = req.body.Tel;
+      var nom = req.body.Nom;
+      var prenom = req.body.Prenom;
+      var adresse = req.body.Adresse;
+      var fonction = req.body.Fonction;
+      var imagePath =  req.file.path;
+     
+
+
       //Vérifier que tous les paramètres obligatoires sont présents :
-      if(id == null || Username == null || Password == null || Type == null|| tel == null){
+      if(id == null || Username == null || Password == null || Type == null|| tel == null || nom == null || prenom == null || adresse == null || fonction == null ||imagePath == null){
           return res.status(400).json({'error':'missing parameters'}); //bad request
       }
 
@@ -162,10 +203,12 @@ function dashBoard  (req,res){
                      numTel : tel
 
                  }).then(function(newUser){
+
+                    ///
                       return res.status(201).json({'Id': newUser.userId}); // new ressource created
                  })
                  .catch(err => {
-                  return res.status(500).json({'error':'Unable to add user:'}); //interne error
+                  return res.status(500).json({'error':'Unable to create user account:'}); //interne error
                   console.error('Unable to add user:', err);
                   });
          
@@ -180,6 +223,69 @@ function dashBoard  (req,res){
 
 
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
 
-    return {BankerInscription,dashBoard};
+    //procedure de création du compte banquier :
+
+    function createClientAccount(req, res){
+      
+        //récupérer les paramètres de l'utilisateur depuis le body de la requete
+        var id = req.body.userId;
+        var Username = req.body.UserName;
+        var Password = req.body.Pwd;
+        var Type = 1;
+        var tel = req.body.Tel;
+        //Vérifier que tous les paramètres obligatoires sont présents :
+        if(id == null || Username == null || Password == null || Type == null|| tel == null){
+            return res.status(400).json({'error':'missing parameters'}); //bad request
+        }
+  
+        
+       //tout d'abord, vérifier si l'utilisateur est déjà présent dans la BDD THARWA
+       const value = sequelize.escape(id);
+       var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)     
+       User.findOne({
+            attributes:['userId'],
+            where: {  idd }
+            
+        })
+        .then(function(userFound){ 
+           if(userFound){ //si'il existe :
+              
+              return res.status(409).json({'error':'User already exists'}); //  conflict
+            
+  
+           }else{
+                  //hasher le mot de passe :
+                  const passwordHash = crypto.createHmac('sha256', Password).digest('hex');
+  
+                  //créer le nouveau utilisateur :
+                   var newUser = User.create({
+                       userId : id,
+                       username : Username,
+                       type : Type,
+                       password : passwordHash,
+                       numTel : tel
+  
+                   }).then(function(newUser){
+                        return res.status(201).json({'Id': newUser.userId}); // new ressource created
+                   })
+                   .catch(err => {
+                    return res.status(500).json({'error':'Unable to add user:'}); //interne error
+                    console.error('Unable to add user:', err);
+                    });
+           
+           }
+        })
+        .catch(function(err){
+            return res.status(500).json({'error':'Can\'t verify parameters'}); //interne error
+            console.log(err);
+        });
+  
+     }
+
+
+
+
+    return {BankerInscription,dashBoard,ClientInscription};
 }

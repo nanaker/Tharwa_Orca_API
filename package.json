@@ -3,14 +3,12 @@
   "version": "1.0.0",
   "main": "server.js",
   "description": "API reste THARWA",
-  "scripts" : {
-    "start" : "node server.js"
+  "scripts": {
+    "start": "node server.js"
   },
-  "engines" : {
-    "node" : "~4.0"
+  "engines": {
+    "node": "~4.0"
   },
-
-
   "keywords": [
     "server.http.api.rest"
   ],
@@ -21,10 +19,9 @@
     "body-parser": "^1.18.2",
     "crypto": "^1.0.1",
     "express": "^4.16.2",
+    "multer": "^1.3.0",
     "request": "^2.83.0",
     "sequelize": "^4.35.0",
     "tedious": "^2.3.1"
   }
-
-
 }
