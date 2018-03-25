@@ -9,9 +9,9 @@ module.exports = function(express,tokenController,accountController,clientContro
 /*-----------------------------------------------------------------------------------------------------------------------*/
 router.get('/info',(req,res) =>{
     console.log('info');
-  //  const token = req.headers['token']; //récupérer le Access token
-          // console.log('token=',token);
-           const token ='v2RarW2ynm4wy1tjH4evI5zIor4LLNcA6MHT7faUOjm9ljOyytFBlgda9puzvpYp4J4hfqHTa5aUbSIdcfmF13fX6hsOeHQz1oueUCnNldSpZmXhlHlzZkevHsEF1QgH3tpTNFt7osXeg14A0Q5tv2h5P2qxZYrWOgURaKLrWmtjFDuPULBLFzVppuEdZNMh17RdXLSBXeWFqlIl0o2ly8gNg1IfaKrPlloq6I87s9X9AQ6g6SfPxX8ftvGQB3J';
+    const token = req.headers['token']; //récupérer le Access token
+       
+          // const token ='v2RarW2ynm4wy1tjH4evI5zIor4LLNcA6MHT7faUOjm9ljOyytFBlgda9puzvpYp4J4hfqHTa5aUbSIdcfmF13fX6hsOeHQz1oueUCnNldSpZmXhlHlzZkevHsEF1QgH3tpTNFt7osXeg14A0Q5tv2h5P2qxZYrWOgURaKLrWmtjFDuPULBLFzVppuEdZNMh17RdXLSBXeWFqlIl0o2ly8gNg1IfaKrPlloq6I87s9X9AQ6g6SfPxX8ftvGQB3J';
         tokenController(token, function(OauthResponse){
             if (OauthResponse.statutCode == 200){
                 clientController.getClientInfo(OauthResponse.userId,(response)=>{
