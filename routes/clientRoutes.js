@@ -134,6 +134,10 @@ router.get('/info',(req,res) =>{
 
 });
 
+router.get('/historique',(req,res) =>{
+    clientController.historique(req,res);
+});
+
     //exports :
    return router;
 

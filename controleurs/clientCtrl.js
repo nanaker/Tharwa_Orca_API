@@ -1,6 +1,6 @@
 //imports
 
-
+var tokenController = require('./tokenCtrl');
 
 //exports
 module.exports = function(Client,sequelize) {
@@ -130,9 +130,37 @@ function getClientInfo (clientId,callback){
     });
 
 }
+function historique(req,res){
+
+     //récupérer le Access token du banquier qui veut valider le compte banquaire
+    // const token = req.headers['token']; 
+     const token='BiIPt8QusRfK6LqpcmHU1SkJ8yL4W79DhBuFeDkXgEpnCk3y1E4Yg56ljkpcVEPN8wnpEluBVKMGgHMZMVrJdLZ5YCe4ux5GqI1yYIuEO4FsJhN0aAi62a3PKViS51JlAWRrd8jldeREXXJwQ3OG96vgXi8Fon3HLyuhBlODiZyEOevVTT7c6UiKRELL2uRTxDE3aGP85b8Nbvh7Op7FWDjedqdadpt3EmlviLhTtMrr34PkpNKB2YCjb1i3xA4';
+     let iduser={};
+     tokenController(token, function(response){
+ 
+         if (response.statutCode == 200){
+             iduser=response.userId;
+             console.log('user '+iduser);
+             sequelize.query('exec historique $userid',
+                    {
+                          bind: {
+                                 userid:iduser
+                                }
+                        }).then((historique) => {
+                            console.log(historique);
+                            return res.status(200).json({'historique':JSON.parse(JSON.stringify(historique[0]))});
+                        
+                     }).catch(err =>  res.status(401).json({'error': 'requete non execute'})); 
+ 
+         }else {
+             
+             res.status(response.statutCode).json({'error': response.error});
+         }
+     });
+}
 
     
     //exporter les services :
-    return {addClient,getClientInfo};
+    return {addClient,getClientInfo,historique};
 
 }
