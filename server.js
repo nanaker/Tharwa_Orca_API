@@ -65,7 +65,7 @@ server.use('/accounts',accountsRoute);
 const clientRoute = require('./routes/clientRoutes')(express,tokenController,accountController,clientController);
 server.use('/clients',clientRoute);
 
-//Creation de la route du virement vers un autre client tharwa
+
 const VirementRoute = require('./routes/VirementRoute')(express,VirementController);
 server.use('/virement',VirementRoute);
 

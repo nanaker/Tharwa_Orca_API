@@ -130,6 +130,11 @@ function getClientInfo (clientId,callback){
     });
 
 }
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*---------------Procedure pour recuperer l'historique de tout les virements et commissions d'un client------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 function historique(req,res){
 
      //récupérer le Access token du banquier qui veut valider le compte banquaire

@@ -61,12 +61,16 @@ else {
 });
 }
 
-//Envois vers un client Tharwa
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*----------------------------------------Procedure pour effectue un virement entre les comptes du client------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
 function Virement_local(req, res){
 
     const token = req.headers['token']; //récupérer le Access token
     console.log("token= "+req.headers.authorization.substring(7));
-    
+    // recuperer les parametres 
     var Montant=req.body.montant;
     var Type1 = req.body.type1;
     var Type2=req.body.type2;
@@ -77,10 +81,7 @@ function Virement_local(req, res){
     let iduser={};
     let idcom={};
     
-    console.log('montant='+Montant);
-    console.log('type1='+Type1);
-    console.log('type2='+Type2);
-    console.log('motif='+Motif);
+    
     
 
 //Verification de non null
@@ -88,10 +89,11 @@ function Virement_local(req, res){
         return res.status(400).json({'error':'missing parameters'}); //bad request
     }
     async.series({
-        User(callback) {
+
+        User(callback) { // recupere l'utilisateur à partir de l'acess token
             tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
             if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-                    console.log(response.userId);
+                   
                     iduser= response.userId;
                     callback();
             }
@@ -100,8 +102,8 @@ function Virement_local(req, res){
            
             
         },
-        CompteEmmeteur(callback){
-                  console.log('id user = '+iduser);
+        CompteEmmeteur(callback){ // recuperer le compte emmeteur
+                  
                
                Compte.findOne({
                 attributes:['Num','Balance'],
@@ -109,14 +111,14 @@ function Virement_local(req, res){
                 'TypeCompte': Type1} })
             .then((Compte1) => {
                 emmeteur=Compte1.Num;
-                if (Compte1.Balance<Montant){
+                if (Compte1.Balance<Montant){ // verifier si le montant à virer ne depasse pas la balance du compte
                     callback(res.status(403).json({'error': 'Balance insuffisante'}))
                 }
                 else callback();
               }).catch(err => callback(res.status(404).json({'error': 'Compte emmeteur non existant'})));
         },
-        CompteRecepteur(callback){
-            console.log('id user = '+iduser);
+        CompteRecepteur(callback){ // recupere le compte du destinataire 
+           
          
          Compte.findOne({
           attributes:['Num'],
@@ -127,7 +129,7 @@ function Virement_local(req, res){
           callback();
         }).catch(err => callback(res.status(404).json({'error': 'Compte destinataire non existant'})));
   },
-     Nom(callback){
+     Nom(callback){ // recuperer le nom du client
     
             Client.findOne({
             attributes:['Nom','Prenom'],
@@ -139,7 +141,7 @@ function Virement_local(req, res){
             }).catch(err => callback(res.status(404).json({'error': 'Utilisateur non existant'})));
              }
              ,
-             idcommission(callback){
+             idcommission(callback){ // recupere l'id de commission generer par le virement 
                 sequelize.query('exec get_next_idcommission').spread((results, metadata) => {
            
                     var rows = JSON.parse(JSON.stringify(results[0]));
@@ -149,9 +151,10 @@ function Virement_local(req, res){
                 });
                 
              },
-             function (callback){
-                 if ((Type1=='0')&&(Type2=='2')){
-                conversion(Montant,0,function(resultat){
+             function (callback){ 
+                 // execution des virement
+                 if ((Type1=='0')&&(Type2=='2')){ // virement du courant vers devise euro
+                conversion(Montant,0,function(resultat){ //conversion du montant vers l'euro
                     sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
                     {
                           bind: {
@@ -172,7 +175,7 @@ function Virement_local(req, res){
                 });
             }
             else {
-               if ((Type1=='0')&&(Type2=='3')){
+               if ((Type1=='0')&&(Type2=='3')){  // virement du courant vers devise dollar
                 conversion(Montant,1,function(resultat){
                     sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
                     {
@@ -194,7 +197,7 @@ function Virement_local(req, res){
                     });
                }
                else {
-                   if ((Type2=='0')&&(Type1=='2')){
+                   if ((Type2=='0')&&(Type1=='2')){ // virement du devise euro vers courant
                     conversion(Montant,2,function(resultat){
                         sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
                         {
@@ -216,7 +219,7 @@ function Virement_local(req, res){
                         });
                    }
                    else {
-                       if ((Type2=='0')&&(Type1=='3')){
+                       if ((Type2=='0')&&(Type1=='3')){ // virement du devise dollar vers courant
                         conversion(Montant,3,function(resultat){
                             sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
                             {
@@ -238,6 +241,7 @@ function Virement_local(req, res){
                             });
                        }
                        else {
+                           // virement entre le compte courant et epargne
                         sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
                     {
                           bind: {

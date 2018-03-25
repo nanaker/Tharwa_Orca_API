@@ -5,6 +5,11 @@ module.exports = function(express,VirementController){
         VirementController.Tranfer_ClientTH(req,res);
     });
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*--------------------------------Service pour les virements entre le meme compte d'un client------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
     router.post('/local',(req,res) =>{
         VirementController.Virement_local(req,res);
     });
