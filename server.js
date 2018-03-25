@@ -48,14 +48,20 @@ const Client = sequelize.import(__dirname + "/models/Client");
 const Compte = sequelize.import(__dirname + "/models/Compte");
 
 //Controllers
+const tokenController = require('./controleurs/tokenCtrl');
 const usersController = require('./controleurs/usersCtrl')(User,sequelize);
 const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
 const accountController = require('./controleurs/accountCtrl')(Compte,sequelize);
 
 //Routes
-const usersRoute = require('./routes/usersRoutes')(express,usersController,clientController,accountController);
+const usersRoute = require('./routes/usersRoutes')(express,tokenController,usersController,clientController,accountController);
 server.use('/users',usersRoute);
 
+const accountsRoute = require('./routes/accountsRoutes')(express,tokenController,accountController);
+server.use('/accounts',accountsRoute);
+
+const clientRoute = require('./routes/clientRoutes')(express,tokenController,accountController,clientController);
+server.use('/clients',clientRoute);
 
 //mettre le serveur en écoute 
 

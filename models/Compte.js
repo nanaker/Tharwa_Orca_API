@@ -12,7 +12,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     DateCreation: {
-      type: DataTypes.DATE,
+      type: DataTypes.STRING,
       allowNull: false
     },
     CodeMonnaie: {
@@ -40,6 +40,8 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     }
   }, {
+    createdAt: false,
+    updatedAt: false,
     tableName: 'Compte'
   });
 };

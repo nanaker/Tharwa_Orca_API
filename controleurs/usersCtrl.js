@@ -1,6 +1,5 @@
 //imports
 var crypto = require('crypto');
-var tokenVerifier = require('./tokenCtrl');
 var multer = require('Multer');
 var path = require('path');
 
@@ -8,25 +7,102 @@ var path = require('path');
 //exports
 module.exports = function(User,sequelize) {
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*                                      Procedure de création des comptes utilisateur                                   */
+ 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+    
+
+function createUserAccount(req, res,type,callback){
+      
+    //récupérer les paramètres de l'utilisateur depuis le body de la requete
+    var id = req.body.userId;
+    var Username = req.body.UserName;
+    var Password = req.body.Pwd;
+    var Type = type;
+    var tel = req.body.Tel;
+    //Vérifier que tous les paramètres obligatoires sont présents :
+    if(id == null || Username == null || Password == null || Type == null|| tel == null){
+        response = {
+            'statutCode' : 400, //bad request
+            'error'  : 'missing parameters'           
+           }
+        callback(response);
+       
+    }
+
+    
+   //tout d'abord, vérifier si l'utilisateur est déjà présent dans la BDD THARWA
+   const value = sequelize.escape(id);
+   var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)     
+   User.findOne({
+        attributes:['userId'],
+        where: {  idd } 
+        
+    })
+    .then(function(userFound){ 
+
+       if(userFound){ //si'il existe :
+            response = {
+                'statutCode' : 409, //  conflict
+                'error'  : 'User already exists'           
+            }
+            callback(response);
+        }
+        else{
+              //hasher le mot de passe :
+              const passwordHash = crypto.createHmac('sha256', Password).digest('hex');
+
+              //créer le nouveau utilisateur :
+               var newUser = User.create({
+                   userId : id,
+                   username : Username,
+                   type : Type,
+                   password : passwordHash,
+                   numTel : tel
+
+               }).then(function(newUser){
+                    response = {
+                        'statutCode' : 201, // new ressource created
+                        'Id'  : newUser.userId           
+                    }
+                    callback(response);
+                   
+               })
+               .catch(err => {
+                    response = {
+                        'statutCode' : 500, //internal error
+                        'error':'Unable to add user'          
+                    }
+                    callback(response);
+                    console.error('Unable to add user', err);
+                });
+       
+       }
+    })
+    .catch(function(err){
+        response = {
+            'statutCode' : 500, //internal error
+            'error':'Can\'t verify parameters'          
+        }
+        callback(response);
+        console.log(err);
+    });
+
+ }
+
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
-/*-------------------------------service de création du compte utilisateur pour banquier---------------------------------*/
+/*-------------------------------prodédure de création du compte utilisateur pour banquier---------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
-    function BankerInscription (req,res){
+    function BankerInscription (idGestionnaire,req,res){
         
-        
-           //récupérer le Access token du gestionnaire qui veut créer le compte pour le banquier
-
-            const token = req.headers['token']; 
-
-            tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification
-            
-            if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-                
-                id = response.userId; //recupérer le id du gestionnaire
+                id = idGestionnaire; //recupérer le id du gestionnaire
                 const value = sequelize.escape(id);
                 var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)
                 User.findOne({ //rechercher l'utilisateur dans La BDD THARWA
@@ -63,54 +139,41 @@ module.exports = function(User,sequelize) {
                      res.status(500).json({'error':'Can\'t verify user'}); 
                      console.log(err);
                 });
-            
-            }else {
-                //si le access token n'est pas valide ou une erreur interne au serveur d'authentification s'est produite:
-                res.status(response.statutCode).json({'error': response.error});
-            }
-
-        });
-
-        
          
-        
     }
 
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
-/*-------------------------------service de création du compte utilisateur pour un client--------------------------------*/
+/*-------------------------------------Procedure pour aploader un fichier au server-------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
 
-function ClientInscription(req,res,erreur){
+function FileUpload(req,res,distination,fileName,callback){
 
     const storage = multer.diskStorage({
-        destination: 'C:/avatars',
-        filename: function (req, file, callback) {
-            callback(null,'avatar'+path.extname(file.originalname));
+        destination: distination , //'C:/avatars'
+        filename: function (req, file, callback1) {
+            callback1(null,fileName+path.extname(file.originalname));
         }
       });
 
-    const upload = multer({ storage: storage }).single('avatar');
+    const upload = multer({ storage: storage }).single(fileName);
 
     upload(req,res,(err)=> {
     if (err){
-        res.status(500).json({'error':'Can\'t upload profile image'});
+        response = {
+            'statutCode' : 500, //  internal error
+            'error':'Can\'t upload profile image'           
+        }
+        callback(response);
     }else {
-        
-         // const imagePath =  req.file.path;
-         createUserAccount(req, res,2,(response)=>{
-            //si le compte utilisateur a été bien créé, on procède à la création du compte banquaire
-            if (response.statutCode == 201){
-                erreur(false);
-               // res.status(response.statutCode).json({'id':response.Id});
-             }else {
-                erreur(true);
-                res.status(response.statutCode).json({'error':response.error});
-             }
-         });
+       
+        response = {
+            'statutCode' : 200 //  success         
+        }
+        callback(response);
      }
     });
     
@@ -119,23 +182,18 @@ function ClientInscription(req,res,erreur){
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 
-/*---------------service pour récupérer les informations du tableau de bord d'un utilisateur authentifié---------------*/   
+/*-----------------------------procedure pour récupérer les informations d'un utilisateur ---------------------------*/   
 
 /*---------------------------------------------------------------------------------------------------------------------*/
  
-function dashBoard  (req,res){
+function getUserInfo  (UserId,callback){
         
-            const token = req.headers['token']; //récupérer le Access token
-           
-            tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification
-            
-            if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-                
-                id = response.userId; //recupérer le id de l'utilisateur
+             
+                id = UserId; //recupérer le id de l'utilisateur
                 const value = sequelize.escape(id);
                 var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)
                 User.findOne({ //rechercher l'utilisateur dans La BDD THARWA
-                    attributes:['userId','username','type'],
+                    attributes:['userId','username','type','numTel'],
                     where: {  idd }
                     
                 })
@@ -144,123 +202,48 @@ function dashBoard  (req,res){
                       
                       //vérifier la compatibilité entre l'utilisateur et l'application qu'il utilise ( web ou mobile)
                       if((userFound.type == 0 && response.appId == 'clientweb') || (userFound.type == 1 && response.appId == 'clientweb')|| (userFound.type == 2 && response.appId == 'clientmobile')){
-                            res.status(200).json({'userId':userFound.userId,
-                                                  'userName': userFound.username,
-                                                  'type' : userFound.type  });
+                            response = {
+                                'statutCode' : 200, // success
+                                'userId':userFound.userId,
+                                'userName': userFound.username,
+                                'type' : userFound.type,
+                                'tel' : userFound.numTel          
+                            }
+                            callback(response);
                       }else {
-                            res.status(401).json({'error':'Unothorized application'}); //unothorized
+                            response = {
+                                'statutCode' : 401, //unothorized
+                                'error':'Unothorized application'          
+                            }
+                            callback(response);
                       }
                    }else{
-                     // utilisateur non trouvé      
-                            res.status(404).json({'error':'User not found'});
+                     // utilisateur non trouvé  
+                        response = {
+                            'statutCode' : 404, //not Found
+                            'error':'User not found'          
+                        }
+                        callback(response);    
                    }
                 })
                 .catch(function(err){
                     //Si une erreur interne au serveur s'est produite :
-                     res.status(500).json({'error':'Can\'t verify user'}); 
-                     console.log(err);
+                    console.log(err);
+                    response = {
+                        'statutCode' : 500, 
+                        'error':'Can\'t verify user'        
+                    }
+                    callback(response);
+                    
+                     
                 });
             
-            }else {
-                //si le access token n'est pas valide ou une erreur interne au serveur d'authentification s'est produite:
-                res.status(response.statutCode).json({'error': response.error});
-            }
-
-        });
-        
-        
-        
-    }
+}
 
 
-/*-----------------------------------------------------------------------------------------------------------------------*/   
-
-/*                                      Procedure de création des comptes utilisateur                                   */
- 
-/*-----------------------------------------------------------------------------------------------------------------------*/   
-
-    
-
-    function createUserAccount(req, res,type,callback){
-      
-        //récupérer les paramètres de l'utilisateur depuis le body de la requete
-        var id = req.body.userId;
-        var Username = req.body.UserName;
-        var Password = req.body.Pwd;
-        var Type = type;
-        var tel = req.body.Tel;
-        //Vérifier que tous les paramètres obligatoires sont présents :
-        if(id == null || Username == null || Password == null || Type == null|| tel == null){
-            response = {
-                'statutCode' : 400, //bad request
-                'error'  : 'missing parameters'           
-               }
-            callback(response);
-           
-        }
-  
-        
-       //tout d'abord, vérifier si l'utilisateur est déjà présent dans la BDD THARWA
-       const value = sequelize.escape(id);
-       var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`)     
-       User.findOne({
-            attributes:['userId'],
-            where: {  idd }
-            
-        })
-        .then(function(userFound){ 
-
-           if(userFound){ //si'il existe :
-                response = {
-                    'statutCode' : 409, //  conflict
-                    'error'  : 'User already exists'           
-                }
-                callback(response);
-            }
-            else{
-                  //hasher le mot de passe :
-                  const passwordHash = crypto.createHmac('sha256', Password).digest('hex');
-  
-                  //créer le nouveau utilisateur :
-                   var newUser = User.create({
-                       userId : id,
-                       username : Username,
-                       type : Type,
-                       password : passwordHash,
-                       numTel : tel
-  
-                   }).then(function(newUser){
-                        response = {
-                            'statutCode' : 201, // new ressource created
-                            'Id'  : newUser.userId           
-                        }
-                        callback(response);
-                       
-                   })
-                   .catch(err => {
-                        response = {
-                            'statutCode' : 500, //internal error
-                            'error':'Unable to add user'          
-                        }
-                        callback(response);
-                        console.error('Unable to add user', err);
-                    });
-           
-           }
-        })
-        .catch(function(err){
-            response = {
-                'statutCode' : 500, //internal error
-                'error':'Can\'t verify parameters'          
-            }
-            callback(response);
-            console.log(err);
-        });
-  
-     }
 
 
 
     //exporter les services :
-    return {BankerInscription,dashBoard,ClientInscription};
+    return {BankerInscription,getUserInfo,FileUpload,createUserAccount};
 }

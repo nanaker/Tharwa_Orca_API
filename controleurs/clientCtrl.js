@@ -5,6 +5,14 @@
 //exports
 module.exports = function(Client,sequelize) {
 
+
+/*---------------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------procedure pour ajouter un client à la BDD ------------------------------------*/   
+
+/*---------------------------------------------------------------------------------------------------------------------*/
+ 
+
     function addClient(req,res,callback) {
 
         //récupérer les paramètres de l'utilisateur depuis le body de la requete
@@ -16,8 +24,16 @@ module.exports = function(Client,sequelize) {
         var fonction = req.body.Fonction;
         var imagePath =  req.file.path;
 
+        if(id == null || type == null || nom == null || prenom == null || adresse == null || fonction == null || imagePath == null){
+            response = {
+                'statutCode' : 400, //bad request
+                'error'  : 'missing parameters'           
+               }
+            callback(response);
+        }
+
         const value = sequelize.escape(id);
-        var idd = sequelize.literal(`userId = CONVERT(varchar, ${value})`) 
+        var idd = sequelize.literal(`IdUser = CONVERT(varchar, ${value})`) 
         Client.findOne({
             attributes:['IdUser'],
             where: {  idd }
@@ -27,11 +43,11 @@ module.exports = function(Client,sequelize) {
 
             if(clientFound){ //si'il existe :
                 response = {
-                    'statutCode' : 409, // new ressource created
+                    'statutCode' : 409, // conflit
                     'error':'Client already exists'         
                 }
                 callback(response);
-                //res.status(409).json({'error':'Client already exists'});
+                
             }
             else{ 
                   //créer le nouveau client :
@@ -72,8 +88,51 @@ module.exports = function(Client,sequelize) {
         });
 
     }
+
+
+
+/*---------------------------------------------------------------------------------------------------------------------*/
+
+/*-----------------------------procedure pour récupérer les informations d'un client authentifié' ---------------------------*/   
+
+/*---------------------------------------------------------------------------------------------------------------------*/
+ 
+function getClientInfo (clientId,callback){
+    
+    Client.findOne({
+        attributes:['Nom','Prenom','Fonction','Type'],
+        where: {  'IdUser' : clientId}
+    }).then( (clientFound)=>{
+
+        if(clientFound){
+            response = {
+                'statutCode' : 200, // success
+                'Nom':clientFound.Nom,
+                'Prenom': clientFound.Prenom,
+                'Fonction' : clientFound.Fonction,
+                'Type' : clientFound.Type          
+            }
+            callback(response);
+        }else {
+            response = {
+                'statutCode' : 404, //not Found
+                'error':'User not found'          
+            }
+            callback(response);
+        }
+    }).catch((err)=>{
+        console.log(err);
+        response = {
+            'statutCode' : 500, 
+            'error':'Can\'t verify client'        
+        }
+        callback(response);
+    });
+
+}
+
     
     //exporter les services :
-    return {addClient};
+    return {addClient,getClientInfo};
 
 }

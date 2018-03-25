@@ -23,10 +23,6 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING,
       allowNull: true
     },
-    NumTel: {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
     Fonction: {
       type: DataTypes.STRING,
       allowNull: true
