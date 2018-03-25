@@ -1,9 +1,10 @@
 //imports
 const datetime = require('node-datetime');
+var tokenController = require('./tokenCtrl');
 
 
 //exports
-module.exports = function(Compte,sequelize) {
+module.exports = function(Client,Compte,sequelize) {
 
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
@@ -225,9 +226,40 @@ function getClientAccounts(ClientId,callback){
 
 }
 
+function getCompteNonValide(req,res){
+    //récupérer le Access token du banquier qui veut valider le compte banquaire
+    const token = req.headers['token']; 
+    let iduser={};
+    tokenController(token, function(response){
+
+        if (response.statutCode == 200){
+            Client.hasMany(Compte, {foreignKey: 'IdUser'})
+            Compte.belongsTo(Client, {foreignKey: 'IdUser'})
+            Compte.findAll({
+
+                include: [{
+                    model: Client,
+                    required: true
+                   }],
+                where:{'Etat' :0, 
+                } ,
+               })
+            .then((Comptes) => { 
+                
+                    res.status(200).json({'Comptes': Comptes});
+                
+              }).catch(err => res.status(404).json({'error': 'erreur dans l\'execution de la requete'}));
+
+        }else {
+            
+            res.status(response.statutCode).json({'error': response.error});
+        }
+    });
+}
+
 
 
 //exports :
-return {CreateCourantAccount,validateAccount,getClientAccounts};
+return {CreateCourantAccount,validateAccount,getClientAccounts,getCompteNonValide};
 
 }

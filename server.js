@@ -52,7 +52,7 @@ const Virement = sequelize.import(__dirname + "/models/Virement");
 const tokenController = require('./controleurs/tokenCtrl');
 const usersController = require('./controleurs/usersCtrl')(User,sequelize);
 const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
-const accountController = require('./controleurs/accountCtrl')(Compte,sequelize);
+const accountController = require('./controleurs/accountCtrl')(Client,Compte,sequelize);
 const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,sequelize,Client);
 
 //Routes

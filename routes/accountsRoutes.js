@@ -37,6 +37,12 @@ router.put('/validate',(req,res) =>{
     
 });
 
+router.get('/compteNonValide',(req,res) =>{
+
+    accountController.getCompteNonValide(req,res);
+   
+});
+
 
     return router;
 
