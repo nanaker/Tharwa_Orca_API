@@ -233,7 +233,7 @@ function getClientAccounts(ClientId,callback){
 function getCompteNonValide(req,res){
     //récupérer le Access token du banquier qui veut valider le compte banquaire
     const token = req.headers['token']; 
-    let iduser={};
+    var iduser={};
     tokenController(token, function(response){
 
         if (response.statutCode == 200){

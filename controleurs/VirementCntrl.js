@@ -75,11 +75,11 @@ function Virement_local(req, res){
     var Type1 = req.body.type1;
     var Type2=req.body.type2;
     var Motif=req.body.motif;
-    let emmeteur ={};
-    let destinataire ={};
-    let nom={};
-    let iduser={};
-    let idcom={};
+    var emmeteur ={};
+    var destinataire ={};
+    var nom={};
+    var iduser={};
+    var idcom={};
     
     
     
