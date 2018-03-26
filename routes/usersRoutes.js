@@ -37,7 +37,7 @@ module.exports = function(express,tokenController,usersController,clientControll
     router.post('/ClientInscription',(req,res) =>{
 
         // 1- Uploader l'image du client
-        usersController.FileUpload(req,res,'C:/avatars','avatar',(response)=>{
+        usersController.FileUpload(req,res,'./uploads','avatar',(response)=>{
             if(response.statutCode == 200){
                 // 2- Création du compte utilisateur pour le client
                 usersController.createUserAccount(req, res,2,(response1)=>{
