@@ -44,7 +44,24 @@ router.put('/validate',(req,res) =>{
 /*-----------------------------------------------------------------------------------------------------------------------*/
 router.get('/compteNonValide',(req,res) =>{
 
-    accountController.getCompteNonValide(req,res);
+    const token = req.headers['token']; //récupérer le Access token
+           
+    tokenController(token, function(OauthResponse){
+        if (OauthResponse.statutCode == 200){
+            accountController.getCompteNonValide((response)=>{
+               if(response.statutCode == 200){
+                res.status(200).json({'Comptes': response.Comptes});
+               } else {
+                res.status(response.statutCode).json({'error': response.error}); 
+               }
+               
+            });
+        }else {
+            res.status(OauthResponse.statutCode).json({'error': OauthResponse.error});
+        }
+    });
+
+    
    
 });
 

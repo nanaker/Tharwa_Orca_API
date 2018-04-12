@@ -66,7 +66,7 @@ const clientRoute = require('./routes/clientRoutes')(express,tokenController,acc
 server.use('/clients',clientRoute);
 
 
-const VirementRoute = require('./routes/VirementRoute')(express,VirementController);
+const VirementRoute = require('./routes/VirementRoute')(express,VirementController,tokenController);
 server.use('/virement',VirementRoute);
 
 //mettre le serveur en écoute 

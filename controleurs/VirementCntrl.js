@@ -66,42 +66,16 @@ else {
 /*----------------------------------------Procedure pour effectue un virement entre les comptes du client------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
-function Virement_local(req, res){
+function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
 
-    const token = req.headers['token']; //récupérer le Access token
-    console.log("token= "+req.headers.authorization.substring(7));
-    // recuperer les parametres 
-    var Montant=req.body.montant;
-    var Type1 = req.body.type1;
-    var Type2=req.body.type2;
-    var Motif=req.body.motif;
-    let emmeteur ={};
-    let destinataire ={};
-    let nom={};
-    let iduser={};
-    let idcom={};
+   
+    var  emmeteur ={};
+    var destinataire ={};
+    var nom={};
+    var idcom={};
     
-    
-    
-
-//Verification de non null
-    if(Montant == null || Type1 == null || Type2== null || Motif == null){
-        return res.status(400).json({'error':'missing parameters'}); //bad request
-    }
     async.series({
 
-        User(callback) { // recupere l'utilisateur à partir de l'acess token
-            tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
-            if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-                   
-                    iduser= response.userId;
-                    callback();
-            }
-            else callback(res.status(response.statutCode).json({'error': response.error}));
-        });
-           
-            
-        },
         CompteEmmeteur(callback){ // recuperer le compte emmeteur
                   
                
@@ -112,10 +86,25 @@ function Virement_local(req, res){
             .then((Compte1) => {
                 emmeteur=Compte1.Num;
                 if (Compte1.Balance<Montant){ // verifier si le montant à virer ne depasse pas la balance du compte
-                    callback(res.status(403).json({'error': 'Balance insuffisante'}))
+                    console.log('balance insuff');
+                    response = {
+                        'statutCode' : 403, // success
+                        'error': 'Balance insuffisante'          
+                    }
+                    callback(rep(response));
+                   
+                    
                 }
                 else callback();
-              }).catch(err => callback(res.status(404).json({'error': 'Compte emmeteur non existant'})));
+              }).catch(err => {
+                response = {
+                    'statutCode' : 404, // success
+                    'error': 'Compte emmeteur non existant'          
+                }
+                callback(rep(response));
+               
+                
+            });
         },
         CompteRecepteur(callback){ // recupere le compte du destinataire 
            
@@ -127,7 +116,15 @@ function Virement_local(req, res){
       .then((Compte2) => {
           destinataire=Compte2.Num;
           callback();
-        }).catch(err => callback(res.status(404).json({'error': 'Compte destinataire non existant'})));
+        }).catch(err => {
+            response = {
+                'statutCode' : 404, // success
+                'error': 'Compte destinataire non existant'          
+            }
+            callback(rep(response));
+           
+            
+        });
   },
      Nom(callback){ // recuperer le nom du client
     
@@ -137,8 +134,15 @@ function Virement_local(req, res){
           
                  .then((User) => {
                  Nom=User.Nom+' '+User.Prenom;;
-                callback();
-            }).catch(err => callback(res.status(404).json({'error': 'Utilisateur non existant'})));
+                callback(); 
+            }).catch(err => {
+                response = {
+                    'statutCode' : 404, // success
+                    'error': 'Utilisateur non existant '          
+                }
+                callback(rep(response));
+                
+            });
              }
              ,
              idcommission(callback){ // recupere l'id de commission generer par le virement 
@@ -146,7 +150,6 @@ function Virement_local(req, res){
            
                     var rows = JSON.parse(JSON.stringify(results[0]));
                     idcom = parseInt(rows.id);
-                    console.log(idcom);
                     callback();
                 });
                 
@@ -168,10 +171,22 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                            }).then((response) => {
-                                callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                            
-                         }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                            }).then((res) => {
+                                response = {
+                                    'statutCode' : 200, //succe
+                                    'succe': 'Virement  effectue avec succe'          
+                                }
+                                callback(rep(response));
+                                
+                            }).catch(err => {
+                                response = {
+                                    'statutCode' : 500, // error
+                                    'error': 'Virement non effectue'          
+                                }
+                                callback(rep(response));
+                               
+                                
+                            });
                 });
             }
             else {
@@ -190,12 +205,24 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                        }).then((response) => {
-                            callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                        
-                     }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                }).then((res) => {
+                                    response = {
+                                        'statutCode' : 200, //succe
+                                        'succe': 'Virement  effectue avec succe'          
+                                    }
+                                    callback(rep(response));
+                                    
+                                }).catch(err => {
+                                    response = {
+                                        'statutCode' : 500, // error
+                                        'error': 'Virement non effectue'          
+                                    }
+                                    callback(rep(response));
+                                  
+                                    
+                                });
                     });
-               }
+                }
                else {
                    if ((Type2=='0')&&(Type1=='2')){ // virement du devise euro vers courant
                     conversion(Montant,2,function(resultat){
@@ -212,12 +239,24 @@ function Virement_local(req, res){
                                     type2:Type2,
                                     id:idcom
                                        }
-                            }).then((response) => {
-                                callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                            
-                         }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                    }).then((res) => {
+                                        response = {
+                                            'statutCode' : 200, //succe
+                                            'succe': 'Virement  effectue avec succe'          
+                                        }
+                                        callback(rep(response));
+                                        
+                                    }).catch(err => {
+                                        response = {
+                                            'statutCode' : 500, // error
+                                            'error': 'Virement non effectue'          
+                                        }
+                                        callback(rep(response));
+                                        
+                                        
+                                    });
                         });
-                   }
+                    }
                    else {
                        if ((Type2=='0')&&(Type1=='3')){ // virement du devise dollar vers courant
                         conversion(Montant,3,function(resultat){
@@ -234,12 +273,24 @@ function Virement_local(req, res){
                                         type2:Type2,
                                         id:idcom
                                            }
-                                }).then((response) => {
-                                    callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                                
-                             }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                        }).then((res) => {
+                                            response = {
+                                                'statutCode' : 200, //succe
+                                                'succe': 'Virement  effectue avec succe'          
+                                            }
+                                            callback(rep(response));
+                                          
+                                        }).catch(err => {
+                                            response = {
+                                                'statutCode' : 500, // error
+                                                'error': 'Virement non effectue'          
+                                            }
+                                            callback(rep(response));
+                                            
+                                            
+                                        });
                             });
-                       }
+                        }
                        else {
                            // virement entre le compte courant et epargne
                         sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
@@ -255,12 +306,24 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                                }).then((response) => {
-                                    callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                                
-                             }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
-                   
-                       }
+                                }).then((res) => {
+                                    response = {
+                                        'statutCode' : 200, //succe
+                                        'succe': 'Virement  effectue avec succe'          
+                                    }
+                                    callback(rep(response));
+                                    
+                                }).catch(err => {
+                                    response = {
+                                        'statutCode' : 500, // error
+                                        'error': 'Virement non effectue'          
+                                    }
+                                    callback(rep(response));
+                                    
+                                    
+                                });
+                    
+                }
                    }
                 
                }
