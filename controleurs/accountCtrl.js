@@ -230,8 +230,9 @@ function getClientAccounts(ClientId,callback){
 /*----------------------------------------Procedure pour extraire les comptes non validés------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
+
 function getCompteNonValide(callback){
-            // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
+           // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
             Client.hasMany(Compte, {foreignKey: 'IdUser'})
             Compte.belongsTo(Client, {foreignKey: 'IdUser'})
             Compte.findAll({

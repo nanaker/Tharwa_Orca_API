@@ -73,7 +73,7 @@ module.exports = function(Client,sequelize) {
                             'error':'Unable to add client'       
                         }
                         callback(response);
-                        console.error('Unable to add user', err);
+                        console.error('Unable to add client', err);
                     });
            
            }
@@ -138,6 +138,7 @@ function getClientInfo (clientId,callback){
 function historique(iduser,callback){
 
              
+
              sequelize.query('exec historique $userid',
                     {
                           bind: {
