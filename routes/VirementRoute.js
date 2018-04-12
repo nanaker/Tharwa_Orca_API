@@ -2,8 +2,9 @@ module.exports = function(express,VirementController){
    
     const router = express.Router();
     router.post('/VirementClientTh',(req,res) =>{
-        VirementController.Tranfer_ClientTH(req,res);
+        VirementController.TranferClientTH(req,res);
     });
+   
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 

@@ -54,6 +54,7 @@ const usersController = require('./controleurs/usersCtrl')(User,sequelize);
 const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
 const accountController = require('./controleurs/accountCtrl')(Client,Compte,sequelize);
 const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,sequelize,Client);
+const VirementController2 = require('./controleurs/VirementCntrl')(Virement,Compte,User,sequelize);
 
 //Routes
 const usersRoute = require('./routes/usersRoutes')(express,tokenController,usersController,clientController,accountController);
@@ -69,9 +70,14 @@ server.use('/clients',clientRoute);
 const VirementRoute = require('./routes/VirementRoute')(express,VirementController);
 server.use('/virement',VirementRoute);
 
+const VirementRoute = require('./routes/VirementRoute')(express,VirementController2);
+server.use('/virement',VirementRoute);
+
 //mettre le serveur en écoute 
 
 server.listen(8080,function (){
    console.log("Serveur en écoute !");
 });
+
+
 
