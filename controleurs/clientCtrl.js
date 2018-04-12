@@ -100,7 +100,7 @@ module.exports = function(Client,sequelize) {
 function getClientInfo (clientId,callback){
     
     Client.findOne({
-        attributes:['Nom','Prenom','Fonction','Type'],
+        attributes:['Nom','Prenom','Fonction','Type','Adresse','Photo'],
         where: {  'IdUser' : clientId}
     }).then( (clientFound)=>{
 
@@ -110,7 +110,9 @@ function getClientInfo (clientId,callback){
                 'Nom':clientFound.Nom,
                 'Prenom': clientFound.Prenom,
                 'Fonction' : clientFound.Fonction,
-                'Type' : clientFound.Type          
+                'Adresse':clientFound.Adresse,
+                'Type' : clientFound.Type ,
+                'Photo'  : clientFound.Photo        
             }
             callback(response);
         }else {
