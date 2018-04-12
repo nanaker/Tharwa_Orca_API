@@ -1,3 +1,4 @@
+
 //imports
 var crypto = require('crypto');
 var http = require("http");
@@ -5,7 +6,7 @@ const request = require('request');
 var tokenVerifier = require('./tokenCtrl');
 var conversion = require('./fctCtrl');
 var async = require('async-if-else')(require('async'));
-var async = require('async-if-else');
+//var async = require('async-if-else');
 //Routes
 module.exports = function(Virement,Compte,User,Client,sequelize) {
 
@@ -194,16 +195,12 @@ return {TranferClientTH};
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
-
-
    
     var  emmeteur ={};
     var destinataire ={};
     var nom={};
     var idcom={};
 
-
-    
     async.series({
 
         CompteEmmeteur(callback){ // recuperer le compte emmeteur
@@ -221,8 +218,8 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                         'statutCode' : 403, // success
                         'error': 'Balance insuffisante'          
                     }
-                    callback(rep(response));
-                   
+                    rep(response);
+                                       
                     
                 }
                 else callback();
@@ -231,7 +228,7 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                     'statutCode' : 404, // success
                     'error': 'Compte emmeteur non existant'          
                 }
-                callback(rep(response));
+                rep(response);
                
                 
             });
@@ -251,7 +248,7 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                 'statutCode' : 404, // success
                 'error': 'Compte destinataire non existant'          
             }
-            callback(rep(response));
+            rep(response);
            
             
         });
@@ -270,7 +267,7 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                     'statutCode' : 404, // success
                     'error': 'Utilisateur non existant '          
                 }
-                callback(rep(response));
+                rep(response);
                 
             });
              }
@@ -306,14 +303,14 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                                     'statutCode' : 200, //succe
                                     'succe': 'Virement  effectue avec succe'          
                                 }
-                                callback(rep(response));
+                                rep(response);
                                 
                             }).catch(err => {
                                 response = {
                                     'statutCode' : 500, // error
                                     'error': 'Virement non effectue'          
                                 }
-                                callback(rep(response));
+                                rep(response);
                                
                                 
                             });
@@ -340,14 +337,14 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                                         'statutCode' : 200, //succe
                                         'succe': 'Virement  effectue avec succe'          
                                     }
-                                    callback(rep(response));
+                                    rep(response);
                                     
                                 }).catch(err => {
                                     response = {
                                         'statutCode' : 500, // error
                                         'error': 'Virement non effectue'          
                                     }
-                                    callback(rep(response));
+                                    rep(response);
                                   
                                     
                                 });
@@ -374,14 +371,14 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                                             'statutCode' : 200, //succe
                                             'succe': 'Virement  effectue avec succe'          
                                         }
-                                        callback(rep(response));
+                                        rep(response);
                                         
                                     }).catch(err => {
                                         response = {
                                             'statutCode' : 500, // error
                                             'error': 'Virement non effectue'          
                                         }
-                                        callback(rep(response));
+                                        rep(response);
                                         
                                         
                                     });
@@ -408,14 +405,14 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                                                 'statutCode' : 200, //succe
                                                 'succe': 'Virement  effectue avec succe'          
                                             }
-                                            callback(rep(response));
+                                            rep(response);
                                           
                                         }).catch(err => {
                                             response = {
                                                 'statutCode' : 500, // error
                                                 'error': 'Virement non effectue'          
                                             }
-                                            callback(rep(response));
+                                            rep(response);
                                             
                                             
                                         });
@@ -441,14 +438,14 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
                                         'statutCode' : 200, //succe
                                         'succe': 'Virement  effectue avec succe'          
                                     }
-                                    callback(rep(response));
+                                    rep(response);
                                     
                                 }).catch(err => {
                                     response = {
                                         'statutCode' : 500, // error
                                         'error': 'Virement non effectue'          
                                     }
-                                    callback(rep(response));
+                                    rep(response);
                                     
                                     
                                 });

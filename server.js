@@ -14,7 +14,7 @@ server.use(bodyParser.json());
 // config of database THARWA
 //den1.mssql6.gear.host
 
-const sequelize = new Sequelize('THARWA', 'connexion', 'orca@2018', {
+const sequelize = new Sequelize('THARWA', 'cnx', 'orca@2018', {
   host: 'localhost',
   dialect: 'mssql',
   operatorsAliases: false,
@@ -74,7 +74,7 @@ server.use('/virement',VirementRoute);
 
 //mettre le serveur en écoute 
 
-server.listen(8088,function (){
+server.listen(8080,function (){
    console.log("Serveur en écoute !");
 });
 
