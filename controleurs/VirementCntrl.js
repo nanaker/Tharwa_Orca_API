@@ -5,11 +5,9 @@ const request = require('request');
 var tokenVerifier = require('./tokenCtrl');
 var conversion = require('./fctCtrl');
 var async = require('async-if-else')(require('async'));
-//var async = require('async-if-else');
+var async = require('async-if-else');
 //Routes
-module.exports = function(Virement,Compte,sequelize,Client) {
-    
-
+module.exports = function(Virement,Compte,User,Client,sequelize) {
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
@@ -30,11 +28,14 @@ function TranferClientTH(req, res){
     if(montant == null || dest == null ||Motif==null){
         return res.status(400).json({'error':'missing parameters'}); //bad request
     }
-  //  const token = req.headers['Token']; //récupérer le Access token
-  const token="Zr8WUBfTRZ5te7p7GbWGrmInVskLOkZj5WCJro32by2FPeDaKGqdQYy75YELRWyagpobIh3AqEgONMh6l5uyYLOJCBgbWsYgQrXnRgcLWLDKgL6RsKK1JSCufOmFJeSn6HGlsSCno7NS6zvuRNbcfrEkA2VndIzvIVAsVhPHLjIl5IUYwg0PRKKwJXNrXZkIJEk25Fp1TZ87pbJDNqCUAlwR9cxGvDh8RM3ymYN0kJpkCiGHwd65NFn5T8w4Njo";
-   //console.log("alors here is the test "+ token);
+  
+    const token="CnupBlDXulFyflvC6SmsoqyayazhDWYAkuWEHZDzui7QS36U2u1OCMwHFlSL4oqwVJuPiAWbDq2zOGis0DGAmwmibUwNkyU3Vf7KQsGMB8IHO5BBIzI7wiPteMNWGZYWRFOkQpmnWrGuXjbhGZDRW6KCQHP9UcgeYiCGS2RD93A4fzjuXw1Idpc1xoTbwStvmiTNVhwQdWSDScC45g0nknvBaENLyBb6QMS47WN31wqHcS2RWGmWoofRzuQ0YC2";
+  // const token = req.headers['token']; //récupérer le Access token
+   //console.log("token= "+req.headers.authorization.substring(7));
+  
    
     tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
+    
     if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
             var id = response.userId; //recupérer le id de l'utilisateur
             const value = sequelize.escape(id);
@@ -63,23 +64,21 @@ function TranferClientTH(req, res){
                                                             where:{'userId' :IDreceiver.IdUser} })
                                                             .then(function(Nomreceiver){
                                                                 if(Nomreceiver){   
-                                                                    if (montant<CompteFoundsent.Balance){
-                                                                        console.log("je suis dans la balance");
+                                                                    if (montant<CompteFoundsent.Balance &&  dest.substr(0,3)=='THW'){
                                                                         sequelize.query('exec GetNextIdCommission').spread((results, metadata) => {
                                                                         var rows = JSON.parse(JSON.stringify(results[0]));
                                                                         idcom = parseInt(rows.id);
-                                                                        console.log("first try "+idcom); 
+                                                                        console.log("Id de la commission "+idcom); 
 
 
                                                                         sequelize.query('exec GetPourcentageCommissionVirTH').spread((results, metadata) => {
                                                                         var rows = JSON.parse(JSON.stringify(results[0]));
                                                                         pourc = parseInt(rows.id);
-                                                                        console.log("second try "+pourc); 
+                                                                        console.log("Le pourcentage de la commission "+pourc); 
                                                                             
 
                                                                         if(Justificatif==null){                                                                                                                                                                                                                             
                                                                             // Y a pas de justificatif à fournir dans la t ransaction sera validée directement
-                                                                            console.log("nom source "+ usersend.username+ montant);                                                            
                                                                             sequelize.query('exec AddVirementClientTharwa $Montant, $CompteDestinataire, $CompteEmmetteur, $Motif, $NomEmetteur, null, $Statut, $NomDestinataire,$pourcentage,$commission',
                                                                             {
                                                                                 bind: {
@@ -104,7 +103,6 @@ function TranferClientTH(req, res){
                                                                         else{   
                                                                             var cmptdest=dest;
                                                                             var emetteur=CompteFoundsent.Num;
-                                                                           // console.log("justificatif le pourcentage et la commission sont "+ pourcentage + "comm est : "+commission);
                                                                             sequelize.query('exec AddVirementClientTharwaEnAttente $Montant, $CompteDestinataire, $CompteEmmetteur, $Motif, $NomEmetteur,$justificatif, null,  $NomDestinataire,$pourcentage,$commission',
                                                                             {
                                                                                 bind: {
@@ -114,7 +112,6 @@ function TranferClientTH(req, res){
                                                                                         CompteEmmetteur:emetteur,    //Compte emetteur 
                                                                                         Motif:Motif,    //Motif d'envoi                                                               
                                                                                         NomEmetteur:usersend.username, //Nom emetteur
-                                                                                        Statut:1,
                                                                                         NomDestinataire:Nomreceiver.username ,// Nom recepteur
                                                                                         pourcentage:pourc,
                                                                                         commission:idcom
@@ -405,7 +402,7 @@ function Virement_local(req, res){
     
 }
 
-return {Tranfer_ClientTH,Virement_local};
+return {TranferClientTH,Virement_local};
 }
 
 

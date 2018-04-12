@@ -1,8 +1,8 @@
 //imports
 const request = require('request');
-const hostname = 'http://auththarwa.cleverapps.io/oauth/info'; //serveur d'authentification
+const hostname = 'http://localhost:8081/oauth/info'; //serveur d'authentification
 
-
+//const hostname = ''
 
 //exports
 module.exports = function (token, callback){
