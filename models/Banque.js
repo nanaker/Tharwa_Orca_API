@@ -20,6 +20,8 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     }
   }, {
+    createdAt: false,
+    updatedAt: false,
     tableName: 'Banque'
   });
 };

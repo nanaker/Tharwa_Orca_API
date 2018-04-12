@@ -17,6 +17,7 @@ module.exports = function(express,VirementController,tokenController){
         var type1 = req.body.type1;
         var type2=req.body.type2;
         var motif=req.body.motif;
+        
 
         if(montant == null || type1 == null || type2== null || motif == null){
             return res.status(400).json({'error':'missing parameters'}); //bad request

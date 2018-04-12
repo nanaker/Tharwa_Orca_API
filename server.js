@@ -48,6 +48,7 @@ const User = sequelize.import(__dirname + "/models/Users");
 const Client = sequelize.import(__dirname + "/models/Client");
 const Compte = sequelize.import(__dirname + "/models/Compte");
 const Virement = sequelize.import(__dirname + "/models/Virement");
+const Banque = sequelize.import(__dirname + "/models/Banque");
 
 //Controllers
 const tokenController = require('./controleurs/tokenCtrl');
@@ -56,6 +57,7 @@ const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
 const accountController = require('./controleurs/accountCtrl')(Client,Compte,sequelize);
 //const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,sequelize,Client);
 const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,User,Client,sequelize);
+const GestionnaireController = require('./controleurs/GestionnaireCntrl')(Virement,User,Banque,sequelize);
 
 
 //Routes
@@ -71,6 +73,9 @@ server.use('/clients',clientRoute);
 
 const VirementRoute = require('./routes/VirementRoute')(express,VirementController,tokenController);
 server.use('/virement',VirementRoute);
+
+const GestionnaireRoute = require('./routes/GestionnaireRoute')(express,GestionnaireController,tokenController);
+server.use('/gestionnaire',GestionnaireRoute);
 
 //mettre le serveur en écoute 
 
