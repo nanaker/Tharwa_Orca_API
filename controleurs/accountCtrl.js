@@ -176,14 +176,9 @@ function getClientAccounts(ClientId,callback){
 /*----------------------------------------Procedure pour extraire les comptes non validés------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
-function getCompteNonValide(req,res){
-    //récupérer le Access token du banquier qui veut valider le compte banquaire
-    const token = req.headers['token']; 
-    var iduser={};
-    tokenController(token, function(response){
 
-        if (response.statutCode == 200){
-            // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
+function getCompteNonValide(callback){
+           // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
             Client.hasMany(Compte, {foreignKey: 'IdUser'})
             Compte.belongsTo(Client, {foreignKey: 'IdUser'})
             Compte.findAll({
@@ -196,16 +191,21 @@ function getCompteNonValide(req,res){
                 } ,
                })
             .then((Comptes) => { 
+                response = {
+                    'statutCode' : 200, // success
+                    'Comptes': Comptes          
+                }
+                callback(response);     
                 
-                    res.status(200).json({'Comptes': Comptes});
-                
-              }).catch(err => res.status(404).json({'error': 'erreur dans l\'execution de la requete'}));
+              }).catch(err => {
+              response = {
+                'statutCode' : 500, // success
+                'error': 'erreur dans l\'execution de la requete'          
+            }
+            callback(response) });
 
-        }else {
-            
-            res.status(response.statutCode).json({'error': response.error});
-        }
-    });
+        
+   
 }
 
 

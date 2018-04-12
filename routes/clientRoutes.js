@@ -8,7 +8,7 @@ module.exports = function(express,chemin,tokenController,accountController,clien
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 router.get('/info',(req,res) =>{
-    console.log('info');
+    
     const token = req.headers['token']; //récupérer le Access token
        
         tokenController(token, function(OauthResponse){
@@ -83,7 +83,24 @@ router.get('/avatar',(req,res) =>{
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
 router.get('/historique',(req,res) =>{
-    clientController.historique(req,res);
+
+    const token = req.headers['token']; //récupérer le Access token
+           
+    tokenController(token, function(OauthResponse){
+        if (OauthResponse.statutCode == 200){
+            clientController.historique(OauthResponse.userId,(response)=>{
+               if(response.statutCode == 200){
+                res.status(200).json({'historique': response.historique});
+               } else {
+                res.status(response.statutCode).json({'error': response.error}); 
+               }
+               
+            });
+        }else {
+            res.status(OauthResponse.statutCode).json({'error': OauthResponse.error});
+        }
+    });
+    
 });
 
     //exports :

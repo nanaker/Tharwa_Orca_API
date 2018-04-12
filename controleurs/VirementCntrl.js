@@ -1,3 +1,4 @@
+
 //imports
 var crypto = require('crypto');
 var http = require("http");
@@ -7,101 +8,201 @@ var conversion = require('./fctCtrl');
 var async = require('async-if-else')(require('async'));
 //var async = require('async-if-else');
 //Routes
-module.exports = function(Virement,Compte,sequelize,Client) {
-    
+module.exports = function(Virement,Compte,User,Client,sequelize) {
 
-//Envois vers un client Tharwa
-function Tranfer_ClientTH(req, res){
+/*-----------------------------------------------------------------------------------------------------------------------*/   
 
-    const token = req.headers['token']; //récupérer le Access token
+/*----------------------------------------Procedure pour effectue un virement vers un autre client THARWA----------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+
+function TranferClientTH(req, res){
+
+
     var montant=req.body.Montant;
-    var Type = req.body.Type;
-    var dest=req.body.CompteDestinataire;
-    var source=req.body.CompteEmmetteur;
+    var Justificatif = req.body.Justificatif;
+    var dest=req.body.CompteDestinataire;//numero de compte de destinataire
+    var Motif=req.body.Motif;
 
-    console.log("le montant est:"+montant+"dest est:"+dest+"source est:"+source);
 
 //Verification de non null
-    if(montant == null || dest == null || source == null || Type == null){
+    if(montant == null || dest == null ||Motif==null){
         return res.status(400).json({'error':'missing parameters'}); //bad request
     }
+  
+    
+   const token = req.headers['token']; //récupérer le Access token
+  
+   
     tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
+    
     if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-            console.log("Un petit test par contre :"+dest);
-            Compte.findOne({
+            var id = response.userId; //recupérer le id de l'utilisateur
+            const value = sequelize.escape(id);
+            Compte.findOne({ // Vérification de lexistance du numero de compte destinataire
                 attributes:['Num'],
                 where:{'Num' :dest} })
                 .then(function(CompteFound){
                     if(CompteFound){
-                    console.log("Le compte existe bien");
-                        if(montant>200000){
-                            // Fournir un justificatif
-                        }else //Effectuer le virement avec la commission
-                        {
+                            Compte.findOne({//vérification de l'éxistance du numero de compte de lemetteur
+                                attributes:['Num','Balance'],
+                                where:{'IdUser' :id} })
+                                .then(function(CompteFoundsent){
+                                    if(CompteFoundsent){
+                                        User.findOne({// recupération du nom de l'emmeteur après vérification de l'éxistance
+                                            attributes:['username'],
+                                            where:{'userId' :id} })
+                                            .then(function(usersend){
+                                                if(usersend){
+                                                    Compte.findOne({// recupération de l'ID du récépteur après vérification de l'éxistance
+                                                    attributes:['IdUser'],
+                                                    where:{'Num' :dest} })
+                                                    .then(function(IDreceiver){
+                                                        if(IDreceiver){
+                                                            User.findOne({// recupération de nom du récépteur après vérification de l'éxistance
+                                                            attributes:['username'],
+                                                            where:{'userId' :IDreceiver.IdUser} })
+                                                            .then(function(Nomreceiver){
+                                                                if(Nomreceiver){   
+                                                                    if (montant<CompteFoundsent.Balance &&  dest.substr(0,3)=='THW'){
+                                                                        sequelize.query('exec GetNextIdCommission').spread((results, metadata) => {
+                                                                        var rows = JSON.parse(JSON.stringify(results[0]));
+                                                                        idcom = parseInt(rows.id);
+                                                                        console.log("Id de la commission "+idcom); 
 
-                        }
-                    }
-                    else{
-                        return res.status(400).json({'error':'Le compte de destination n\'existe pas'});
-                    }
 
+                                                                        sequelize.query('exec GetPourcentageCommissionVirTH').spread((results, metadata) => {
+                                                                        var rows = JSON.parse(JSON.stringify(results[0]));
+                                                                        pourc = parseInt(rows.id);
+                                                                        console.log("Le pourcentage de la commission "+pourc); 
+                                                                            
+
+                                                                        if(Justificatif==null){                                                                                                                                                                                                                             
+                                                                            // Y a pas de justificatif à fournir dans la t ransaction sera validée directement
+                                                                            sequelize.query('exec AddVirementClientTharwa $Montant, $CompteDestinataire, $CompteEmmetteur, $Motif, $NomEmetteur, null, $Statut, $NomDestinataire,$pourcentage,$commission',
+                                                                            {
+                                                                                bind: {
+                                                                                        Montant: montant, 
+                                                                                        CompteDestinataire: dest,   //Compte destination                                                                                                                                                                                                                      
+                                                                                        CompteEmmetteur:CompteFoundsent.Num,    //Compte emetteur 
+                                                                                        Motif:Motif,    //Motif d'envoi                                                               
+                                                                                        NomEmetteur:usersend.username, //Nom emetteur
+                                                                                        Statut:1,
+                                                                                        NomDestinataire:Nomreceiver.username, // Nom recepteur
+                                                                                        pourcentage:pourc,
+                                                                                        commission:idcom
+                                                                                     }
+                                                                                     
+                                                                            }).then((response) => {
+                                                                                return( res.status(200).json({'succe':'Virement sans justificatif effectué avec succe'}));
+                                                                            
+                                                                             }).catch(err => {return(res.status(401).json({'error': 'Virement sans justificatif non effectue'}))});                                                                     
+                                                                                                                                   
+                                                                                                                                    
+                                                                       }
+                                                                        else{   
+                                                                            var cmptdest=dest;
+                                                                            var emetteur=CompteFoundsent.Num;
+                                                                            sequelize.query('exec AddVirementClientTharwaEnAttente $Montant, $CompteDestinataire, $CompteEmmetteur, $Motif, $NomEmetteur,$justificatif, null,  $NomDestinataire,$pourcentage,$commission',
+                                                                            {
+                                                                                bind: {
+                                                                                        CompteDestinataire: dest,   //Compte destination  
+                                                                                        Montant: montant,
+                                                                                        justificatif :Justificatif,                                                              
+                                                                                        CompteEmmetteur:emetteur,    //Compte emetteur 
+                                                                                        Motif:Motif,    //Motif d'envoi                                                               
+                                                                                        NomEmetteur:usersend.username, //Nom emetteur
+                                                                                        NomDestinataire:Nomreceiver.username ,// Nom recepteur
+                                                                                        pourcentage:pourc,
+                                                                                        commission:idcom
+                                                                            }}).then((response) => {
+                                                                                return( res.status(200).json({'succe':'Virement avec justificatif et notification effectué avec succe'}));
+                                                                            
+                                                                             }).catch(err => {return(res.status(401).json({'error': 'Virement avec justificatif et notification non effectue'}))});                                                                     
+                                                                                                                                                 
+                                                                         
+                                                                        }
+                                                                    })
+                                                                    })
+                                                                   
+                                                                    } 
+                                                                    else{
+                                                                        return (res.status(403).json({'error': 'Balance insuffisante'}))
+                                                                    }                                                           
+                                                                    
+                                                                }
+                                                                else{ 
+                                                                   return res.status(404).json({'error':'Le recepteur ne contient pas de nom lorsquil a etait enregistre'});
+                                                                }
+                                                            })
+                                                            .catch(function(err){
+                                                                //Si une erreur interne au serveur s'est produite :
+                                                                 res.status(500).json({'error':'peut pas récuperer le nom du recepteur'}); 
+                                                                 console.log(err);
+                                                            });
+                                                        }
+                                                        else{ 
+                                                           return res.status(404).json({'error':'le recepteur n a pas de mail'});
+                                                        }   
+        
+                                                    })
+                                                    .catch(function(err){
+                                                        //Si une erreur interne au serveur s'est produite :
+                                                         res.status(500).json({'error':'peut pas récuperer le mail du recepteur'}); 
+                                                         console.log(err);
+                                                    });
+
+                                                }
+                                                else{ console.log("Le nom de lemetteur inexistant");
+                                                    return res.status(404).json({'error':'Le nom de lemetteur inexistant'});
+                                                }
+                                            })
+                                            .catch(function(err){
+                                                //Si une erreur interne au serveur s'est produite :
+                                                 res.status(500).json({'error':'peut pas vérifier le nom de lemetteur'}); 
+                                                 console.log(err);
+                                            });
+                                    
+                                    }
+                                    else{ console.log("Le compte de l\'emetteur inexistant");
+                                        return res.status(404).json({'error':'Le compte de l\'emetteur inexistant'});
+                                    }
+                                })
+                                .catch(function(err){
+                                    //Si une erreur interne au serveur s'est produite :
+                                     res.status(500).json({'error':'peut pas vérifier le numero de compte lemetteur'}); 
+                                     console.log(err);
+                                });
+                                 
+                    }
+                    else{  console.log("Le compte de destination inexistant");
+                        return res.status(404).json({'error':'Le compte de destination inexistant'});
+                    }
             })
-            .catch(function(err){
-                return res.status(500).json({'error':'Je ne sais pas'}); //interne error
+            .catch(function(err){ console.log("peut pas vérifier le numero de compte destination");
+                return res.status(500).json({'error':'peut pas vérifier le numero de compte destination'}); //interne error
                 console.log(err);
             });
-
-
 }
-else {
-    //si le access token n'est pas valide ou une erreur interne au serveur d'authentification s'est produite:
-    res.status(response.statutCode).json({'error': response.error});
-}
+})
 
-});
-}
 
+return {TranferClientTH};
+}
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
 /*----------------------------------------Procedure pour effectue un virement entre les comptes du client------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
-function Virement_local(req, res){
-
-    const token = req.headers['token']; //récupérer le Access token
-    console.log("token= "+req.headers.authorization.substring(7));
-    // recuperer les parametres 
-    var Montant=req.body.montant;
-    var Type1 = req.body.type1;
-    var Type2=req.body.type2;
-    var Motif=req.body.motif;
-    var emmeteur ={};
+function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
+   
+    var  emmeteur ={};
     var destinataire ={};
     var nom={};
-    var iduser={};
     var idcom={};
-    
-    
-    
 
-//Verification de non null
-    if(Montant == null || Type1 == null || Type2== null || Motif == null){
-        return res.status(400).json({'error':'missing parameters'}); //bad request
-    }
     async.series({
 
-        User(callback) { // recupere l'utilisateur à partir de l'acess token
-            tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
-            if (response.statutCode == 200){ //si le serveur d'authentification répond positivement (i.e: Access token valide)
-                   
-                    iduser= response.userId;
-                    callback();
-            }
-            else callback(res.status(response.statutCode).json({'error': response.error}));
-        });
-           
-            
-        },
         CompteEmmeteur(callback){ // recuperer le compte emmeteur
                   
                
@@ -112,10 +213,25 @@ function Virement_local(req, res){
             .then((Compte1) => {
                 emmeteur=Compte1.Num;
                 if (Compte1.Balance<Montant){ // verifier si le montant à virer ne depasse pas la balance du compte
-                    callback(res.status(403).json({'error': 'Balance insuffisante'}))
+                    console.log('balance insuff');
+                    response = {
+                        'statutCode' : 403, // success
+                        'error': 'Balance insuffisante'          
+                    }
+                    rep(response);
+                                       
+                    
                 }
                 else callback();
-              }).catch(err => callback(res.status(404).json({'error': 'Compte emmeteur non existant'})));
+              }).catch(err => {
+                response = {
+                    'statutCode' : 404, // success
+                    'error': 'Compte emmeteur non existant'          
+                }
+                rep(response);
+               
+                
+            });
         },
         CompteRecepteur(callback){ // recupere le compte du destinataire 
            
@@ -127,7 +243,15 @@ function Virement_local(req, res){
       .then((Compte2) => {
           destinataire=Compte2.Num;
           callback();
-        }).catch(err => callback(res.status(404).json({'error': 'Compte destinataire non existant'})));
+        }).catch(err => {
+            response = {
+                'statutCode' : 404, // success
+                'error': 'Compte destinataire non existant'          
+            }
+            rep(response);
+           
+            
+        });
   },
      Nom(callback){ // recuperer le nom du client
     
@@ -137,8 +261,15 @@ function Virement_local(req, res){
           
                  .then((User) => {
                  Nom=User.Nom+' '+User.Prenom;;
-                callback();
-            }).catch(err => callback(res.status(404).json({'error': 'Utilisateur non existant'})));
+                callback(); 
+            }).catch(err => {
+                response = {
+                    'statutCode' : 404, // success
+                    'error': 'Utilisateur non existant '          
+                }
+                rep(response);
+                
+            });
              }
              ,
              idcommission(callback){ // recupere l'id de commission generer par le virement 
@@ -146,7 +277,6 @@ function Virement_local(req, res){
            
                     var rows = JSON.parse(JSON.stringify(results[0]));
                     idcom = parseInt(rows.id);
-                    console.log(idcom);
                     callback();
                 });
                 
@@ -168,10 +298,22 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                            }).then((response) => {
-                                callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                            
-                         }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                            }).then((res) => {
+                                response = {
+                                    'statutCode' : 200, //succe
+                                    'succe': 'Virement  effectue avec succe'          
+                                }
+                                rep(response);
+                                
+                            }).catch(err => {
+                                response = {
+                                    'statutCode' : 500, // error
+                                    'error': 'Virement non effectue'          
+                                }
+                                rep(response);
+                               
+                                
+                            });
                 });
             }
             else {
@@ -190,12 +332,24 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                        }).then((response) => {
-                            callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                        
-                     }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                }).then((res) => {
+                                    response = {
+                                        'statutCode' : 200, //succe
+                                        'succe': 'Virement  effectue avec succe'          
+                                    }
+                                    rep(response);
+                                    
+                                }).catch(err => {
+                                    response = {
+                                        'statutCode' : 500, // error
+                                        'error': 'Virement non effectue'          
+                                    }
+                                    rep(response);
+                                  
+                                    
+                                });
                     });
-               }
+                }
                else {
                    if ((Type2=='0')&&(Type1=='2')){ // virement du devise euro vers courant
                     conversion(Montant,2,function(resultat){
@@ -212,12 +366,24 @@ function Virement_local(req, res){
                                     type2:Type2,
                                     id:idcom
                                        }
-                            }).then((response) => {
-                                callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                            
-                         }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                    }).then((res) => {
+                                        response = {
+                                            'statutCode' : 200, //succe
+                                            'succe': 'Virement  effectue avec succe'          
+                                        }
+                                        rep(response);
+                                        
+                                    }).catch(err => {
+                                        response = {
+                                            'statutCode' : 500, // error
+                                            'error': 'Virement non effectue'          
+                                        }
+                                        rep(response);
+                                        
+                                        
+                                    });
                         });
-                   }
+                    }
                    else {
                        if ((Type2=='0')&&(Type1=='3')){ // virement du devise dollar vers courant
                         conversion(Montant,3,function(resultat){
@@ -234,12 +400,24 @@ function Virement_local(req, res){
                                         type2:Type2,
                                         id:idcom
                                            }
-                                }).then((response) => {
-                                    callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                                
-                             }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
+                                        }).then((res) => {
+                                            response = {
+                                                'statutCode' : 200, //succe
+                                                'succe': 'Virement  effectue avec succe'          
+                                            }
+                                            rep(response);
+                                          
+                                        }).catch(err => {
+                                            response = {
+                                                'statutCode' : 500, // error
+                                                'error': 'Virement non effectue'          
+                                            }
+                                            rep(response);
+                                            
+                                            
+                                        });
                             });
-                       }
+                        }
                        else {
                            // virement entre le compte courant et epargne
                         sequelize.query('exec Virement_local $montant,$montant2,$emmeteur,$recepteur,$motif,$nom,null,null,$type1,$type2,$id',
@@ -255,12 +433,24 @@ function Virement_local(req, res){
                                 type2:Type2,
                                 id:idcom
                                    }
-                                }).then((response) => {
-                                    callback( res.status(200).json({'succe':'Virement effectué avec succe'}));
-                                
-                             }).catch(err => callback(res.status(401).json({'error': 'Virement non effectue'}))); 
-                   
-                       }
+                                }).then((res) => {
+                                    response = {
+                                        'statutCode' : 200, //succe
+                                        'succe': 'Virement  effectue avec succe'          
+                                    }
+                                    rep(response);
+                                    
+                                }).catch(err => {
+                                    response = {
+                                        'statutCode' : 500, // error
+                                        'error': 'Virement non effectue'          
+                                    }
+                                    rep(response);
+                                    
+                                    
+                                });
+                    
+                }
                    }
                 
                }
@@ -274,7 +464,7 @@ function Virement_local(req, res){
     
 }
 
-return {Tranfer_ClientTH,Virement_local};
+return {TranferClientTH,Virement_local};
 }
 
 
