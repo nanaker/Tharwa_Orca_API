@@ -7,7 +7,7 @@ var oxr = require('open-exchange-rates'),
 
 /*-----------------------------------------------------------------------------------------------------------------------*/ 
  module.exports =  function  (montant,par,callback){
-     let valeur;
+     var valeur;
     oxr.set({ app_id: 'a8a5c2a6302b453f9266c7254b043f6a' });
 oxr.latest(function() {
     // Apply exchange rates and base rate to `fx` library object:

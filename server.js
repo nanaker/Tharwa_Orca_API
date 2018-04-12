@@ -12,8 +12,9 @@ server.use(bodyParser.json());
 
 
 // config of database THARWA
+//den1.mssql6.gear.host
 
-const sequelize = new Sequelize('THARWA', 'cnx', 'orca@2018', {
+const sequelize = new Sequelize('THARWA', 'connexion', 'orca@2018', {
   host: 'localhost',
   dialect: 'mssql',
   operatorsAliases: false,
@@ -53,7 +54,9 @@ const tokenController = require('./controleurs/tokenCtrl');
 const usersController = require('./controleurs/usersCtrl')(User,sequelize);
 const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
 const accountController = require('./controleurs/accountCtrl')(Client,Compte,sequelize);
-const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,sequelize,Client);
+//const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,sequelize,Client);
+const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,User,Client,sequelize);
+
 
 //Routes
 const usersRoute = require('./routes/usersRoutes')(express,tokenController,usersController,clientController,accountController);
@@ -71,7 +74,9 @@ server.use('/virement',VirementRoute);
 
 //mettre le serveur en écoute 
 
-server.listen(8080,function (){
+server.listen(8088,function (){
    console.log("Serveur en écoute !");
 });
+
+
 

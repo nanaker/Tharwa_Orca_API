@@ -1,6 +1,6 @@
 //imports
 var crypto = require('crypto');
-var multer = require('Multer');
+var multer = require('multer');
 var path = require('path');
 
 
