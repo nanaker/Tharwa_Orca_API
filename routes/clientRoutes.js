@@ -103,6 +103,34 @@ router.get('/historique',(req,res) =>{
     
 });
 
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*----------------------------------------Service pour Recuperer les taux de change a partir d'une base  ------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+
+router.post('/tauxChange',(req,res) =>{
+
+    const token = req.headers['token']; //récupérer le Access token
+    var b=req.body.base
+           
+    tokenController(token, function(OauthResponse){
+        if (OauthResponse.statutCode == 200){
+            clientController.tauxChange(b,(response)=>{
+               if(response.statutCode == 200){
+                res.status(200).json({'Taux': response.rates});
+               } else {
+                res.status(response.statutCode).json({'error': response.error}); 
+               }
+               
+            });
+        }else {
+            res.status(OauthResponse.statutCode).json({'error': OauthResponse.error});
+        }
+    });
+    
+});
+
     //exports :
    return router;
 

@@ -1,6 +1,8 @@
 //imports
 
 var tokenController = require('./tokenCtrl');
+var oxr = require('open-exchange-rates'),
+	fx = require('money');
 
 //exports
 module.exports = function(Client,sequelize) {
@@ -163,9 +165,67 @@ function historique(iduser,callback){
  
          
 }
+function tauxChange(base,callback){
+
+    oxr.set({ app_id: 'a8a5c2a6302b453f9266c7254b043f6a' });
+    oxr.latest(function() {
+        // Apply exchange rates and base rate to `fx` library object:
+        
+        fx.rates = oxr.rates;
+        fx.base = oxr.base;
+        
+        switch (base)
+        {
+            case 'USD':  { 
+            response = {
+                'statutCode' : 200, // success
+                'rates':[{
+                    'EUR':fx(1).from('USD').to('EUR')   ,
+                    'DZD':fx(1).from('USD').to('DZD')  }  ]
+                 
+            }
+            callback(response); 
+        }
+            break ;
+            case 'EUR': {
+
+                response = {
+                    'statutCode' : 200, // success
+                    'rates':[{
+                        'USD':fx(1).from('EUR').to('USD')   ,
+                        'DZD':fx(1).from('EUR').to('DZD')  }  ]
+                     
+                }
+                callback(response); 
+            }
+            
+            break ;
+            case 'DZD':  {
+                response = {
+                    'statutCode' : 200, // success
+                    'rates':[{
+                        'EUR':fx(1).from('DZD').to('EUR')   ,
+                        'USD':fx(1).from('DZD').to('USD')  }  ]
+                     
+                }
+                
+                callback(response); 
+            }
+           
+            break ;
+            
+            
+    
+    
+        }
+       
+    });
+
+
+}
 
     
     //exporter les services :
-    return {addClient,getClientInfo,historique};
+    return {addClient,getClientInfo,historique,tauxChange};
 
 }
