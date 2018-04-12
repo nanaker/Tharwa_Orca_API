@@ -67,7 +67,7 @@ server.use('/users',usersRoute);
 const accountsRoute = require('./routes/accountsRoutes')(express,tokenController,accountController);
 server.use('/accounts',accountsRoute);
 
-const clientRoute = require('./routes/clientRoutes')(express,tokenController,accountController,clientController);
+const clientRoute = require('./routes/clientRoutes')(express,__dirname,tokenController,accountController,clientController);
 server.use('/clients',clientRoute);
 
 
@@ -81,6 +81,7 @@ server.use('/gestionnaire',GestionnaireRoute);
 
 server.listen(8080,function (){
    console.log("Serveur en écoute !");
+   console.log(__dirname)
 });
 
 

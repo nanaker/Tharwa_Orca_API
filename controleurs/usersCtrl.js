@@ -13,13 +13,14 @@ module.exports = function(User,sequelize) {
  
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
-    
+     
 
 function createUserAccount(req, res,type,callback){
       
     //récupérer les paramètres de l'utilisateur depuis le body de la requete
     var id = req.body.userId;
     var Username = req.body.UserName;
+    console.log(Username)
     var Password = req.body.Pwd;
     var Type = type;
     var tel = req.body.Tel;
@@ -150,19 +151,21 @@ function createUserAccount(req, res,type,callback){
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
 
-function FileUpload(req,res,distination,fileName,callback){
+function FileUpload(req,res,distination,callback){
 
+    var fileName = req.body.UserName;
     const storage = multer.diskStorage({
-        destination: distination , //'C:/avatars'
+        destination: distination , 
         filename: function (req, file, callback1) {
-            callback1(null,fileName+path.extname(file.originalname));
+            callback1(null,'avatar_'+Date.now()+path.extname(file.originalname));
         }
       });
 
-    const upload = multer({ storage: storage }).single(fileName);
+    const upload = multer({ storage: storage }).single('avatar');
 
     upload(req,res,(err)=> {
     if (err){
+        console.error(err)
         response = {
             'statutCode' : 500, //  internal error
             'error':'Can\'t upload profile image'           

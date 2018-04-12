@@ -1,5 +1,6 @@
 //imports
 const request = require('request');
+
 const hostname = 'http://localhost:8081/oauth/info'; //serveur d'authentification
 
 //const hostname = ''
