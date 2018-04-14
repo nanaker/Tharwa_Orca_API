@@ -1,6 +1,8 @@
 //imports
 
 var tokenController = require('./tokenCtrl');
+var oxr = require('open-exchange-rates'),
+	fx = require('money');
 
 //exports
 module.exports = function(Client,sequelize) {
@@ -100,7 +102,7 @@ module.exports = function(Client,sequelize) {
 function getClientInfo (clientId,callback){
     
     Client.findOne({
-        attributes:['Nom','Prenom','Fonction','Type'],
+        attributes:['Nom','Prenom','Fonction','Type','Adresse','Photo'],
         where: {  'IdUser' : clientId}
     }).then( (clientFound)=>{
 
@@ -110,7 +112,9 @@ function getClientInfo (clientId,callback){
                 'Nom':clientFound.Nom,
                 'Prenom': clientFound.Prenom,
                 'Fonction' : clientFound.Fonction,
-                'Type' : clientFound.Type          
+                'Adresse':clientFound.Adresse,
+                'Type' : clientFound.Type ,
+                'Photo'  : clientFound.Photo        
             }
             callback(response);
         }else {
@@ -135,37 +139,93 @@ function getClientInfo (clientId,callback){
 /*---------------Procedure pour recuperer l'historique de tout les virements et commissions d'un client------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
-function historique(req,res){
+function historique(iduser,callback){
 
-     //récupérer le Access token du banquier qui veut valider le compte banquaire
-    // const token = req.headers['token']; 
-     const token='BiIPt8QusRfK6LqpcmHU1SkJ8yL4W79DhBuFeDkXgEpnCk3y1E4Yg56ljkpcVEPN8wnpEluBVKMGgHMZMVrJdLZ5YCe4ux5GqI1yYIuEO4FsJhN0aAi62a3PKViS51JlAWRrd8jldeREXXJwQ3OG96vgXi8Fon3HLyuhBlODiZyEOevVTT7c6UiKRELL2uRTxDE3aGP85b8Nbvh7Op7FWDjedqdadpt3EmlviLhTtMrr34PkpNKB2YCjb1i3xA4';
-     var iduser={};
-     tokenController(token, function(response){
- 
-         if (response.statutCode == 200){
-             iduser=response.userId;
-             console.log('user '+iduser);
+             
+
              sequelize.query('exec historique $userid',
                     {
                           bind: {
                                  userid:iduser
                                 }
                         }).then((historique) => {
-                            console.log(historique);
-                            return res.status(200).json({'historique':JSON.parse(JSON.stringify(historique[0]))});
+                            response = {
+                                'statutCode' : 200, // success
+                                'historique':JSON.parse(JSON.stringify(historique[0]))        
+                            }
+                            callback(response); 
+                            
                         
-                     }).catch(err =>  res.status(401).json({'error': 'requete non execute'})); 
+                        }).catch(err => {
+                            response = {
+                              'statutCode' : 500, // success
+                              'error': 'erreur dans l\'execution de la requete'          
+                          }
+                          callback(response) });
  
-         }else {
-             
-             res.status(response.statutCode).json({'error': response.error});
-         }
-     });
+         
+}
+function tauxChange(base,callback){
+
+    oxr.set({ app_id: 'a8a5c2a6302b453f9266c7254b043f6a' });
+    oxr.latest(function() {
+        // Apply exchange rates and base rate to `fx` library object:
+        
+        fx.rates = oxr.rates;
+        fx.base = oxr.base;
+        
+        switch (base)
+        {
+            case 'USD':  { 
+            response = {
+                'statutCode' : 200, // success
+                'rates':[{
+                    'EUR':fx(1).from('USD').to('EUR')   ,
+                    'DZD':fx(1).from('USD').to('DZD')  }  ]
+                 
+            }
+            callback(response); 
+        }
+            break ;
+            case 'EUR': {
+
+                response = {
+                    'statutCode' : 200, // success
+                    'rates':[{
+                        'USD':fx(1).from('EUR').to('USD')   ,
+                        'DZD':fx(1).from('EUR').to('DZD')  }  ]
+                     
+                }
+                callback(response); 
+            }
+            
+            break ;
+            case 'DZD':  {
+                response = {
+                    'statutCode' : 200, // success
+                    'rates':[{
+                        'EUR':fx(1).from('DZD').to('EUR')   ,
+                        'USD':fx(1).from('DZD').to('USD')  }  ]
+                     
+                }
+                
+                callback(response); 
+            }
+           
+            break ;
+            
+            
+    
+    
+        }
+       
+    });
+
+
 }
 
     
     //exporter les services :
-    return {addClient,getClientInfo,historique};
+    return {addClient,getClientInfo,historique,tauxChange};
 
 }

@@ -139,105 +139,46 @@ function validateAccount(numAccout,callback){
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
 
-/*-------------------------------récupéérer les informations de tous les comptes d'un client ---------------------------*/
+/*-------------------------------récupérer les informations de tous les comptes d'un client ---------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
+
+
 function getClientAccounts(ClientId,callback){
-    
-    Compte.findAll({
+        Client.hasMany(Compte, {foreignKey: 'IdUser'})
+        Compte.belongsTo(Client, {foreignKey: 'IdUser'})
+        Compte.findAll({
 
-        attributes:['Num','Etat','Balance'],
-        where: { 'IdUser' : ClientId}
-        
-    }).then((accounts)=>{
-        
-        if(accounts.length == 0){
-            response = {
-                'statutCode' : 400, 
-                'error':'Accounts not found'        
-            }
-            callback(response);
-        }else if(accounts.length == 1){
-            response = {
-                'statutCode' : 200, 
-                'nbComptes' : 1,
-                'NumCompte1':accounts[0].Num,
-                'EtatCompte1' : accounts[0].Etat,
-                'BalanceCompte1': accounts[0].Balance         
-            }
-            callback(response);
-        }else if (accounts.length == 2){
-            response = {
-                'statutCode' : 200, 
-                'nbComptes' : 2,
-                'NumCompte1':accounts[0].Num,
-                'EtatCompte1' : accounts[0].Etat,
-                'BalanceCompte1': accounts[0].Balance,
-                'NumCompte2':accounts[1].Num,
-                'EtatCompte2' : accounts[1].Etat,
-                'BalanceCompte2': accounts[1].Balance         
-            }
-            callback(response);
-        }else if (accounts.length == 3){
-            response = {
-                'statutCode' : 200, 
-                'nbComptes' : 3,
-                'NumCompte1':accounts[0].Num,
-                'EtatCompte1' : accounts[0].Etat,
-                'BalanceCompte1': accounts[0].Balance,
-                'NumCompte2':accounts[1].Num,
-                'EtatCompte2' : accounts[1].Etat,
-                'BalanceCompte2': accounts[1].Balance,
-                'NumCompte3':accounts[2].Num,
-                'EtatCompte3' : accounts[2].Etat,
-                'BalanceCompte3': accounts[2].Balance         
-            }
-            callback(response);
+            attributes:['Num','Etat','Balance'],
+            where: { 'IdUser' : ClientId} 
             
-        }else if (accounts.length == 4){
-            response = {
-                'statutCode' : 200, 
-                'nbComptes' : 4,
-                'NumCompte1':accounts[0].Num,
-                'EtatCompte1' : accounts[0].Etat,
-                'BalanceCompte1': accounts[0].Balance,
-                'NumCompte2':accounts[1].Num,
-                'EtatCompte2' : accounts[1].Etat,
-                'BalanceCompte2': accounts[1].Balance,
-                'NumCompte3':accounts[2].Num,
-                'EtatCompte3' : accounts[2].Etat,
-                'BalanceCompte3': accounts[2].Balance,
-                'NumCompte4':accounts[3].Num,
-                'EtatCompte4' : accounts[3].Etat,
-                'BalanceCompte4': accounts[3].Balance         
+        })
+        .then((Comptes) => { 
+            
+                //res.status(200).json({'Comptes': Comptes});
+                response ={
+                    'statutCode' : 200,
+                    'Comptes' : Comptes
+                }
+                callback(response)
+            
+        }).catch(err => {
+           // res.status(404).json({'error': 'erreur dans l\'execution de la requete'})
+            response ={
+                'statutCode' : 500,
+                'error' : 'cant verify accounts'
             }
-            callback(response);
-        }
-
-    }).catch((err)=>{
-        response = {
-            'statutCode' : 500, 
-            'error':'Can\'t verify accounts'        
-        }
-        callback(response);
-
-    });
-
-
+            callback(response)
+        });
 }
 /*-----------------------------------------------------------------------------------------------------------------------*/   
 
 /*----------------------------------------Procedure pour extraire les comptes non validés------------------------------------*/
 
 /*-----------------------------------------------------------------------------------------------------------------------*/
-function getCompteNonValide(req,res){
-    //récupérer le Access token du banquier qui veut valider le compte banquaire
-    const token = req.headers['token']; 
-    var iduser={};
-    tokenController(token, function(response){
 
-        if (response.statutCode == 200){
-            // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
+function getCompteNonValide(callback){
+           // faire une jointure entre la table client et la table Compte pour recuperer les infos du client et du compte non validé
             Client.hasMany(Compte, {foreignKey: 'IdUser'})
             Compte.belongsTo(Client, {foreignKey: 'IdUser'})
             Compte.findAll({
@@ -250,16 +191,21 @@ function getCompteNonValide(req,res){
                 } ,
                })
             .then((Comptes) => { 
+                response = {
+                    'statutCode' : 200, // success
+                    'Comptes': Comptes          
+                }
+                callback(response);     
                 
-                    res.status(200).json({'Comptes': Comptes});
-                
-              }).catch(err => res.status(404).json({'error': 'erreur dans l\'execution de la requete'}));
+              }).catch(err => {
+              response = {
+                'statutCode' : 500, // success
+                'error': 'erreur dans l\'execution de la requete'          
+            }
+            callback(response) });
 
-        }else {
-            
-            res.status(response.statutCode).json({'error': response.error});
-        }
-    });
+        
+   
 }
 
 

@@ -1,5 +1,6 @@
 
-
+var multer  = require('multer')
+var upload = multer()
 
 module.exports = function(express,tokenController,usersController,clientController,accountController){
    
@@ -37,7 +38,9 @@ module.exports = function(express,tokenController,usersController,clientControll
     router.post('/ClientInscription',(req,res) =>{
 
         // 1- Uploader l'image du client
-        usersController.FileUpload(req,res,'./uploads','avatar',(response)=>{
+        //console.log(req.body.UserName)
+        usersController.FileUpload(req,res,'./uploads',(response)=>{
+            
             if(response.statutCode == 200){
                 // 2- Création du compte utilisateur pour le client
                 usersController.createUserAccount(req, res,2,(response1)=>{

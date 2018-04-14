@@ -14,7 +14,7 @@ server.use(bodyParser.json());
 // config of database THARWA
 //den1.mssql6.gear.host
 
-const sequelize = new Sequelize('THARWA', 'connexion', 'orca@2018', {
+const sequelize = new Sequelize('THARWA', 'cnx', 'orca@2018', {
   host: 'localhost',
   dialect: 'mssql',
   operatorsAliases: false,
@@ -48,6 +48,7 @@ const User = sequelize.import(__dirname + "/models/Users");
 const Client = sequelize.import(__dirname + "/models/Client");
 const Compte = sequelize.import(__dirname + "/models/Compte");
 const Virement = sequelize.import(__dirname + "/models/Virement");
+const Banque = sequelize.import(__dirname + "/models/Banque");
 
 //Controllers
 const tokenController = require('./controleurs/tokenCtrl');
@@ -55,6 +56,7 @@ const usersController = require('./controleurs/usersCtrl')(User,sequelize);
 const clientController = require('./controleurs/clientCtrl')(Client,sequelize);
 const accountController = require('./controleurs/accountCtrl')(Client,Compte,sequelize);
 const VirementController = require('./controleurs/VirementCntrl')(Virement,Compte,User,Client,sequelize);
+const GestionnaireController = require('./controleurs/GestionnaireCntrl')(Virement,User,Banque,sequelize);
 
 
 
@@ -66,17 +68,21 @@ server.use('/users',usersRoute);
 const accountsRoute = require('./routes/accountsRoutes')(express,tokenController,accountController);
 server.use('/accounts',accountsRoute);
 
-const clientRoute = require('./routes/clientRoutes')(express,tokenController,accountController,clientController);
+const clientRoute = require('./routes/clientRoutes')(express,__dirname,tokenController,accountController,clientController);
 server.use('/clients',clientRoute);
 
 
-const VirementRoute = require('./routes/VirementRoute')(express,VirementController);
+const VirementRoute = require('./routes/VirementRoute')(express,VirementController,tokenController);
 server.use('/virement',VirementRoute);
+
+const GestionnaireRoute = require('./routes/GestionnaireRoute')(express,GestionnaireController,tokenController);
+server.use('/gestionnaire',GestionnaireRoute);
 
 //mettre le serveur en écoute 
 
 server.listen(8080,function (){
    console.log("Serveur en écoute !");
+   console.log(__dirname)
 });
 
 
