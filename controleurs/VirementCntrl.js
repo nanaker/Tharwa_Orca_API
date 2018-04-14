@@ -29,9 +29,8 @@ function TranferClientTH(req, res){
         return res.status(400).json({'error':'missing parameters'}); //bad request
     }
   
-    const token="CnupBlDXulFyflvC6SmsoqyayazhDWYAkuWEHZDzui7QS36U2u1OCMwHFlSL4oqwVJuPiAWbDq2zOGis0DGAmwmibUwNkyU3Vf7KQsGMB8IHO5BBIzI7wiPteMNWGZYWRFOkQpmnWrGuXjbhGZDRW6KCQHP9UcgeYiCGS2RD93A4fzjuXw1Idpc1xoTbwStvmiTNVhwQdWSDScC45g0nknvBaENLyBb6QMS47WN31wqHcS2RWGmWoofRzuQ0YC2";
-  // const token = req.headers['token']; //récupérer le Access token
-   //console.log("token= "+req.headers.authorization.substring(7));
+    const token = req.headers['token']; //récupérer le Access token
+    console.log("token= "+req.headers.authorization.substring(7));
   
    
     tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
@@ -401,8 +400,19 @@ function Virement_local(req, res){
     });
     
 }
+/*-----------------------------------------------------------------------------------------------------------------------*/   
 
-return {TranferClientTH,Virement_local};
+/*--------------------------Procedure pour lister tout les virements qui ne sont pas encore validés----------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+function Listes_virements_non_traites(req, res){
+    sequelize.query('exec VirementNonTraites').spread((results, rows) => {      
+          
+            res.status(200).json(rows);
+    })  
+}
+
+return {TranferClientTH,Virement_local,Listes_virements_non_traites};
 }
 
 
