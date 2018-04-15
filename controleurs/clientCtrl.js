@@ -5,7 +5,7 @@ var oxr = require('open-exchange-rates'),
 	fx = require('money');
 
 //exports
-module.exports = function(Client,sequelize) {
+module.exports = function(Client,sequelize,fcts) {
 
 
 /*---------------------------------------------------------------------------------------------------------------------*/
@@ -141,29 +141,22 @@ function getClientInfo (clientId,callback){
 /*-----------------------------------------------------------------------------------------------------------------------*/
 function historique(iduser,callback){
 
-             
-
-             sequelize.query('exec historique $userid',
-                    {
-                          bind: {
-                                 userid:iduser
-                                }
-                        }).then((historique) => {
-                            response = {
-                                'statutCode' : 200, // success
-                                'historique':JSON.parse(JSON.stringify(historique[0]))        
-                            }
-                            callback(response); 
-                            
-                        
-                        }).catch(err => {
-                            response = {
-                              'statutCode' : 500, // success
-                              'error': 'erreur dans l\'execution de la requete'          
-                          }
-                          callback(response) });
- 
-         
+    fcts.historique(iduser,function(err,historique) {
+        if (err){
+            response = {
+                'statutCode' : 500, // success
+                'error': 'erreur dans l\'execution de la requete'          
+            }
+            callback(response) ;
+        }else{
+            response = {
+                'statutCode' : 200, // success
+                'historique':historique      
+            }
+            callback(response);  
+        }
+       });
+      
 }
 function tauxChange(base,callback){
 

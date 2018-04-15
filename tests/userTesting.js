@@ -1,5 +1,5 @@
 //imports and constants
-const base_url = "http://api-tharwaa.cleverapps.io";
+const base_url = "http:localhost:8080";
 var request = require("request");
 var expect  = require('chai').expect;
 
