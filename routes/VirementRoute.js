@@ -1,9 +1,20 @@
+
 module.exports = function(express,VirementController,tokenController){
+
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*--------------------------------Service pour le virement vers un autre client Tharwa------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+ 
+
    
     const router = express.Router();
     router.post('/VirementClientTh',(req,res) =>{
         VirementController.TranferClientTH(req,res);
     });
+
+
    
 
 /*-----------------------------------------------------------------------------------------------------------------------*/   
@@ -40,5 +51,21 @@ module.exports = function(express,VirementController,tokenController){
        
     }
     });
+
+
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*--------------------------------Service pour la liste des virements non encore traités------------------------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+ 
+
+router.get('/ListVirementNonTraites',(req,res) =>{
+    VirementController.Listes_virements_non_traites(req,res);
+});
+
+
+
+
     return router;
 }

@@ -29,8 +29,10 @@ function TranferClientTH(req, res){
         return res.status(400).json({'error':'missing parameters'}); //bad request
     }
   
+
     
    const token = req.headers['token']; //récupérer le Access token
+
   
    
     tokenVerifier(token, function(response){   //vérifier le access token auprès du serveur d'authentification      
@@ -379,10 +381,21 @@ function Virement_local(iduser,Montant,Type1,Type2,Motif,rep){
     });
     
 }
+/*-----------------------------------------------------------------------------------------------------------------------*/   
+
+/*--------------------------Procedure pour lister tout les virements qui ne sont pas encore validés----------------------*/
+
+/*-----------------------------------------------------------------------------------------------------------------------*/
+function Listes_virements_non_traites(req, res){
+    sequelize.query('exec VirementNonTraites').spread((results, rows) => {      
+          
+            res.status(200).json(rows);
+    })  
+}
 
 
 
-return {TranferClientTH,Virement_local};
+return {TranferClientTH,Virement_local,Listes_virements_non_traites};
 
 }
 
