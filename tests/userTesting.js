@@ -5,6 +5,7 @@ var expect = require('chai').expect;
 
 
 //test1
+//test2
 
 
 //tester la récupération des info du tableau de bord
